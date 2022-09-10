@@ -1,10 +1,7 @@
 package com.matyrobbrt.kaupenbot.modmail
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder
-import com.matyrobbrt.kaupenbot.modmail.commands.ACloseCommand
-import com.matyrobbrt.kaupenbot.modmail.commands.AReplyCommand
-import com.matyrobbrt.kaupenbot.modmail.commands.CloseCommand
-import com.matyrobbrt.kaupenbot.modmail.commands.ReplyCommand
+import com.matyrobbrt.kaupenbot.modmail.commands.*
 import com.matyrobbrt.kaupenbot.modmail.db.TicketsDAO
 import com.matyrobbrt.kaupenbot.util.ConfigurateUtils
 import groovy.transform.CompileStatic
@@ -48,7 +45,9 @@ final class ModMail {
 
         final commands = [
                 new AReplyCommand(), new ReplyCommand(),
-                new CloseCommand(), new ACloseCommand()
+                new CloseCommand(), new ACloseCommand(),
+
+                new BlackListCommand(), new UnBlackListCommand()
         ]
 
         final client = new CommandClientBuilder().tap {

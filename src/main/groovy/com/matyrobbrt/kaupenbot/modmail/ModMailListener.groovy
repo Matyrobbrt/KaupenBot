@@ -44,7 +44,7 @@ final class ModMailListener extends ListenerAdapter {
 
     private static MessageCreateData makeInitialMessage(Member member) {
         return new MessageCreateBuilder()
-            .setContent(Arrays.stream(ModMail.config.moderatorRoles).map { "<@&${it}>" }.toList().join(" "))
+            .setContent(Arrays.stream(ModMail.config.pingRoles).map { "<@&${it}>" }.toList().join(" "))
             .addEmbeds(embed {
                 color = 0xadd8e6
                 title = 'New Ticket'
@@ -66,6 +66,10 @@ final class ModMailListener extends ListenerAdapter {
         final author = event.author
         if (author.bot) return
         ModMail.guild.retrieveMember(event.author).queue({ member ->
+            if (member.roles.any { it.idLong == ModMail.config.blacklistedRole }) {
+                event.message.reply("You're blacklisted from tickets!").queue()
+                return
+            }
             final active = ModMail.activeTicket(author.idLong)
             if (active !== null) {
                 final thread = ModMail.guild.getThreadChannelById(active)

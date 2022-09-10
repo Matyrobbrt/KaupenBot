@@ -18,7 +18,7 @@ import java.util.function.Predicate
 @CompileStatic
 abstract class WebhookManager {
     static WebhookManager of(String name) {
-        return of(e -> e.trim() == name, name, AllowedMentions.none());
+        return of(e -> e.trim() == name, name, AllowedMentions.none())
     }
 
     static WebhookManager of(Predicate<String> matcher, String webhookName, AllowedMentions allowedMentions, @Nullable Consumer<Webhook> creationListener) {
@@ -109,26 +109,16 @@ final class WebhookManagerImpl extends WebhookManager {
     }
 
     private Webhook getOrCreateWebhook(IWebhookContainer channel) {
-        final var alreadyExisted = unwrap(Objects.requireNonNull(channel).retrieveWebhooks()
-                .submit(false))
-                .stream()
-                .filter { predicate.test(it.name) }
-                .findAny()
-        return alreadyExisted.orElseGet(() -> {
-            final var webhook = unwrap(channel.createWebhook(webhookName).submit(false))
+        Objects.requireNonNull(channel).retrieveWebhooks()
+                .submit(false).get()
+                .find { predicate.test(it.name) }
+        ?: {
+            final var webhook = channel.createWebhook(webhookName).submit(false).get()
             if (creationListener != null) {
                 creationListener.accept(webhook)
             }
             return webhook
-        })
-    }
-
-    private static <T> T unwrap(CompletableFuture<T> completableFuture) {
-        try {
-            return completableFuture.get()
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e)
-        }
+        }.call()
     }
 
     void close() {

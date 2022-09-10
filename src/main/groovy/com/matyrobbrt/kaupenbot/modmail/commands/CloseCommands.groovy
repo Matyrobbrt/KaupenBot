@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.messages.MessageEditData
 
 import java.awt.*
+import java.util.concurrent.Callable
 import java.util.function.Function
 
 @CompileStatic
@@ -88,7 +89,7 @@ static void sendSlash(SlashCommandEvent event, boolean isAnonymous) {
 
     final reason = event.getOption('reason')?.asString
     close(thread, event.member, isAnonymous, reason, {
-        event.reply('Successfully closed the ticket!').queue()
+        event.reply('Successfully closed the ticket!')
     }, {
         event.reply('Could not close ticket: ' + it).setEphemeral(true).queue()
     }, true)
@@ -99,13 +100,15 @@ static void sendPrefix(CommandEvent event, boolean isAnonymous) {
     if (event.channel.type !== ChannelType.GUILD_PUBLIC_THREAD) return
     final thread = event.channel as ThreadChannel
     if (thread.parentChannel.idLong !== ModMail.config.loggingChannel) return
-    close(thread, event.member, isAnonymous, event.args, {}, {
+    close(thread, event.member, isAnonymous, event.args, {
+        event.message.addReaction(ModMailListener.SUCCESS_EMOJI)
+    }, {
         event.message.reply(it).flatMap { event.message.addReaction(ModMailListener.FAILED_EMOJI) }
     })
 }
 
 @CompileStatic
-static void close(ThreadChannel thread, Member moderator, boolean anonymous, String reason, Runnable onSuccess, Function<String, RestAction> onFailure, boolean checkGoodThread = false) {
+static void close(ThreadChannel thread, Member moderator, boolean anonymous, String reason, Callable<RestAction> onSuccess, Function<String, RestAction> onFailure, boolean checkGoodThread = false) {
     final userId = ModMail.database.withExtension(TicketsDAO) {
         it.getUser(thread.idLong, true)
     }
@@ -145,8 +148,8 @@ static void close(ThreadChannel thread, Member moderator, boolean anonymous, Str
             }
             .flatMap {
                 thread.sendMessage('This thread will now be archived! Please refrain from sending messages in it!')
+                return onSuccess()
             }
-            .map { onSuccess.run(); return it }
             .flatMap { thread.manager.setArchived(true).setLocked(true) }
             .queue({
                 ModMail.database.useExtension(TicketsDAO) {

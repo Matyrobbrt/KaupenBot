@@ -50,3 +50,10 @@ dependencies {
 
     compileClasspath 'net.sf.trove4j:trove4j:3.0.3'
 }
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+tasks.withType(GroovyCompile).configureEach {
+    it.groovyOptions.fork = true
+    it.groovyOptions.encoding = 'UTF-8'
+    it.groovyOptions.optimizationOptions.indy = true
+}

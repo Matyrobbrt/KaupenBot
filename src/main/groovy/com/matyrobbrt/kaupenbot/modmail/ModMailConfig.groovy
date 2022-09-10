@@ -11,8 +11,6 @@ class ModMailConfig {
     boolean repliesOnly = true
     long loggingChannel
     long guildId
-    String[] moderatorRoles
-
-    // TODO implement
-    // String blacklistedRole
+    String[] pingRoles
+    long blacklistedRole
 }

@@ -1,10 +1,18 @@
 package com.matyrobbrt.kaupenbot.modmail
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder
+import com.matyrobbrt.jdahelper.DismissListener
+import com.matyrobbrt.jdahelper.components.ComponentListener
+import com.matyrobbrt.jdahelper.components.ComponentManager
+import com.matyrobbrt.jdahelper.components.storage.ComponentStorage
+import com.matyrobbrt.jdahelper.pagination.Paginator
+import com.matyrobbrt.jdahelper.pagination.PaginatorBuilder
 import com.matyrobbrt.kaupenbot.modmail.commands.*
 import com.matyrobbrt.kaupenbot.modmail.db.TicketsDAO
 import com.matyrobbrt.kaupenbot.util.ConfigurateUtils
+import com.matyrobbrt.kaupenbot.util.DeferredComponentListeners
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.github.cdimascio.dotenv.Dotenv
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
@@ -12,17 +20,31 @@ import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.events.ReadyEvent
+import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import org.jdbi.v3.core.Jdbi
+import org.jetbrains.annotations.NotNull
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 
+import javax.annotation.Nonnull
 import javax.annotation.Nullable
 import java.nio.file.Path
 
+@Slf4j
 @CompileStatic
 final class ModMail {
+    private static final DeferredComponentListeners COMPONENTS = new DeferredComponentListeners()
+
+    static ComponentListener.Builder getComponentListener(final String featureId) {
+        COMPONENTS[featureId]
+    }
+    static PaginatorBuilder paginator(final String featureId) {
+        Paginator.builder(getComponentListener(featureId))
+    }
+
     static Jdbi database
     static JDA jda
     static ModMailConfig config
@@ -32,6 +54,9 @@ final class ModMail {
                 'ModMail Data',
                 'modmail'
         )
+
+        final storage = ComponentStorage.sql(database, 'components')
+        final components = COMPONENTS.createManager(storage)
 
         final configPath = dir.resolve('config.json')
         config = ConfigurateUtils.loadConfig(
@@ -43,28 +68,37 @@ final class ModMail {
                 new ModMailConfig()
         ).value.get()
 
+        final slashCommands = [
+                new BlackListCommand(), new UnBlackListCommand(),
+                new TicketsCommand()
+        ]
         final commands = [
                 new AReplyCommand(), new ReplyCommand(),
                 new CloseCommand(), new ACloseCommand(),
-
-                new BlackListCommand(), new UnBlackListCommand()
         ]
 
         final client = new CommandClientBuilder().tap {
             ownerId = '0000000000'
             prefixes = config.prefixes
             activity = null
-            commands.each {
+            commands.forEach {
                 addCommand(it)
                 addSlashCommand(it)
             }
+            slashCommands.each { addSlashCommand(it) }
             forceGuildOnly(config.guildId)
         }.build()
 
         jda = JDABuilder.createLight(dotenv.get('MOD_MAIL_TOKEN'))
             .enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT)
             .setActivity(Activity.watching('for your DMs'))
-            .addEventListeners(client, new ModMailListener())
+            .addEventListeners(client, new ModMailListener(), new DismissListener(), components)
+            .addEventListeners(new ListenerAdapter() {
+                @Override
+                void onReady(@NotNull @Nonnull ReadyEvent event) {
+                    log.warn('ModMail is ready to work. Logged in as: {} ({})', event.getJDA().selfUser.asTag, event.getJDA().selfUser.id)
+                }
+            })
             .build()
     }
 

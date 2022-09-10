@@ -4,12 +4,12 @@ import com.matyrobbrt.kaupenbot.modmail.db.TicketsDAO
 import com.matyrobbrt.kaupenbot.util.webhooks.WebhookManager
 import com.matyrobbrt.kaupenbot.util.webhooks.WebhookMessageSender
 import groovy.transform.CompileStatic
+import kotlin.Pair
 import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.entities.Member
-import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.MessageEmbed
-import net.dv8tion.jda.api.entities.ThreadChannel
+import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.entities.emoji.Emoji
+import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent
+import net.dv8tion.jda.api.events.channel.update.ChannelUpdateArchivedEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.exceptions.ErrorHandler
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -42,6 +42,42 @@ final class ModMailListener extends ListenerAdapter {
         }
     }
 
+    @Override
+    void onChannelDelete(@NotNull @Nonnull ChannelDeleteEvent event) {
+        if (event.channelType !== ChannelType.GUILD_PUBLIC_THREAD) return
+
+        final id = event.channel.idLong
+        final thread = event.channel.asThreadChannel()
+        if (thread.parentChannel.idLong == ModMail.config.loggingChannel) {
+            final owner = ModMail.database.withExtension(TicketsDAO) {
+                it.getUser(id, true)
+            }
+            if (owner === null) return
+            ModMail.database.useExtension(TicketsDAO) {
+                it.removeThread(id)
+            }
+            thread.retrieveParentMessage()
+                .flatMap { msg -> event.guild.retrieveMember(UserSnowflake.fromId(owner)).map {new Pair<>(msg, it) }  }
+                .flatMap {
+                    final member = it.component2()
+                    it.component1().editMessage(
+                            MessageEditData.fromEmbeds(embed {
+                                sentNow()
+                                color = Color.GREEN
+                                title = '~~New Ticket~~ Ticked has been deleted'
+                                description = "Ticked has been deleted."
+                                setFooter("${member.user.asTag} | ${member.user.id}", member.user.effectiveAvatarUrl)
+                            })
+                    )
+                }.queue()
+        }
+    }
+
+    @Override
+    void onChannelUpdateArchived(@NotNull @Nonnull ChannelUpdateArchivedEvent event) {
+        // TODO handle archival
+    }
+
     private static MessageCreateData makeInitialMessage(Member member) {
         return new MessageCreateBuilder()
             .setContent(Arrays.stream(ModMail.config.pingRoles).map { "<@&${it}>" }.toList().join(" "))
@@ -66,7 +102,7 @@ final class ModMailListener extends ListenerAdapter {
         final author = event.author
         if (author.bot) return
         ModMail.guild.retrieveMember(event.author).queue({ member ->
-            if (member.roles.any { it.idLong == ModMail.config.blacklistedRole }) {
+            if (member.roles.any { it.idLong === ModMail.config.blacklistedRole }) {
                 event.message.reply("You're blacklisted from tickets!").queue()
                 return
             }

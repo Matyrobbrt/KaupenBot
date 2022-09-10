@@ -31,7 +31,7 @@ dependencies {
     implementation libs.groovy.nio
 
     implementation libs.jda
-    implementation 'com.matyrobbrt:jdahelper:1.2.0'
+    implementation 'com.matyrobbrt:jdahelper:1.2.1'
 
     implementation libs.jdbi.core
     implementation libs.jdbi.sqlobject

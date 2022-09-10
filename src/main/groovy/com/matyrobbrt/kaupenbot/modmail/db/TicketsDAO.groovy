@@ -12,6 +12,8 @@ import javax.annotation.Nullable
 interface TicketsDAO extends Transactional<TicketsDAO> {
     @SqlQuery('select threadId from tickets where userId = :user and active = :active')
     List<Long> getThreads(@Bind('user') long userId, @Bind('active') boolean active)
+    @SqlQuery('select threadId from tickets where userId = :user')
+    List<Long> getThreads(@Bind('user') long userId)
 
     @SqlUpdate('insert into tickets values(:user, :thread, :active)')
     void insertThread(@Bind('user') long user, @Bind('thread') long thread, @Bind('active') boolean active)
@@ -19,6 +21,9 @@ interface TicketsDAO extends Transactional<TicketsDAO> {
     @Nullable
     @SqlQuery('select userId from tickets where threadId = :thread and active = :active')
     Long getUser(@Bind('thread') long threadId, @Bind('active') boolean active)
+
+    @SqlUpdate('delete from tickets where threadId = :thread')
+    void removeThread(@Bind('thread') long threadId)
 
     @SqlUpdate('update tickets set active = :active where threadId = :thread')
     void markActive(@Bind('thread') long threadId, @Bind('active') boolean active)

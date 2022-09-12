@@ -15,7 +15,7 @@ class Main {
     static void main(String[] args) throws IOException {
         MessageCreateAction.defaultMentionRepliedUser = false
         final env = Dotenv.load()
-        if (env.get('enableModMail') ?: true) {
+        if (env.get('enableModMail') === null || Boolean.parseBoolean(env.get('enableModMail'))) {
             final path = Path.of('modmail')
             Files.createDirectories(path)
             ModMail.start(path, env)

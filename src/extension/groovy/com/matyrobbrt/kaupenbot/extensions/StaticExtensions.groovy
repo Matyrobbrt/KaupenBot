@@ -6,6 +6,8 @@ import net.dv8tion.jda.api.entities.MessageEmbed
 import org.flywaydb.core.Flyway
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.sqlobject.SqlObjectPlugin
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.sqlite.SQLiteDataSource
 
 import java.nio.file.Files
@@ -37,5 +39,9 @@ class StaticExtensions {
         closure(builder)
         closure.resolveStrategy = Closure.DELEGATE_FIRST
         return builder.build()
+    }
+
+    static Logger get(LoggerFactory self) {
+        return LoggerFactory.getLogger(StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).callerClass)
     }
 }

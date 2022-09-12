@@ -1,15 +1,16 @@
 package com.matyrobbrt.kaupenbot.modmail
 
 import com.jagrosh.jdautilities.command.CommandClientBuilder
+import com.jagrosh.jdautilities.command.SlashCommand
 import com.matyrobbrt.jdahelper.DismissListener
 import com.matyrobbrt.jdahelper.components.ComponentListener
-import com.matyrobbrt.jdahelper.components.ComponentManager
 import com.matyrobbrt.jdahelper.components.storage.ComponentStorage
 import com.matyrobbrt.jdahelper.pagination.Paginator
 import com.matyrobbrt.jdahelper.pagination.PaginatorBuilder
 import com.matyrobbrt.kaupenbot.modmail.commands.*
 import com.matyrobbrt.kaupenbot.modmail.db.TicketsDAO
 import com.matyrobbrt.kaupenbot.util.ConfigurateUtils
+import com.matyrobbrt.kaupenbot.util.Constants
 import com.matyrobbrt.kaupenbot.util.DeferredComponentListeners
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -32,9 +33,12 @@ import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 import javax.annotation.Nonnull
 import javax.annotation.Nullable
 import java.nio.file.Path
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.TimeUnit
 
 @Slf4j
 @CompileStatic
+@Newify(pattern = '[A-z][A-Za-z0-9_]*')
 final class ModMail {
     private static final DeferredComponentListeners COMPONENTS = new DeferredComponentListeners()
 
@@ -71,13 +75,13 @@ final class ModMail {
         final slashCommands = [
                 new BlackListCommand(), new UnBlackListCommand(),
                 new TicketsCommand()
-        ]
+        ] as List<SlashCommand>
         final commands = [
                 new AReplyCommand(), new ReplyCommand(),
                 new CloseCommand(), new ACloseCommand(),
-        ]
+        ] as List<SlashCommand>
 
-        final client = new CommandClientBuilder().tap {
+        final client = CommandClientBuilder().tap {
             ownerId = '0000000000'
             prefixes = config.prefixes
             activity = null
@@ -100,6 +104,10 @@ final class ModMail {
                 }
             })
             .build()
+
+        Constants.EXECUTOR.scheduleAtFixedRate({
+            components.removeComponentsOlderThan(30, ChronoUnit.MINUTES)
+        }, 0, 30, TimeUnit.MINUTES)
     }
 
     static Guild getGuild() {

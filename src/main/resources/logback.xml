@@ -1,6 +1,4 @@
 <configuration>
-    <!--Log levels include ERROR, WARN, INFO, DEBUG, TRACE -->
-
     <appender name="CONSOLE"
               class="ch.qos.logback.core.ConsoleAppender">
         <encoder
@@ -11,22 +9,15 @@
             </pattern>
         </encoder>
     </appender>
-    <!--Log levels include ERROR, WARN, INFO, DEBUG, TRACE -->
+
     <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
     </root>
-
-    <!--Log levels include ERROR, WARN, INFO, DEBUG, TRACE -->
     <root level="WARN">
         <appender-ref ref="CHANNEL"/>
     </root>
 
-    <!--Disable the weird D4J stuffs -->
-    <logger name="discord4j.gateway.payload.JacksonPayloadReader" level="ERROR" additivity="false"/>
     <!--Make all useless loggers shut up -->
     <logger name="io.netty.buffer.AbstractByteBufAllocator" level="WARN" additivity="false"/>
-    <logger name="discord4j.rest.request.RequestStream" level="WARN" additivity="false"/>
-    <logger name="reactor.netty.resources.DefaultPooledConnectionProvider" level="WARN" additivity="false"/>
-    <logger name="reactor.netty.ReactorNetty" level="WARN" additivity="false"/>
     <logger name="io.netty.buffer.PooledByteBufAllocator" level="WARN" additivity="false"/>
 </configuration>

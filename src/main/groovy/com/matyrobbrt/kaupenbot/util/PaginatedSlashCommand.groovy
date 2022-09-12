@@ -4,7 +4,6 @@ import com.jagrosh.jdautilities.command.SlashCommand
 import com.jagrosh.jdautilities.command.SlashCommandEvent
 import com.matyrobbrt.jdahelper.pagination.Paginator
 import com.matyrobbrt.jdahelper.pagination.PaginatorBuilder
-import com.matyrobbrt.jdahelper.pagination.PaginatorImpl
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
@@ -14,11 +13,11 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 abstract class PaginatedSlashCommand extends SlashCommand {
     public final Paginator paginator
 
-    PaginatedSlashCommand(final PaginatorBuilder paginator) {
+    PaginatedSlashCommand(final PaginatorBuilder paginator, final boolean requireDefer = false) {
+        if (requireDefer) paginator.buttonInteractionHandler(JavaCalls.deferringHandler(this))
         this.paginator = paginator
                 .message((startingIndex, maximum, args) -> new MessageCreateBuilder()
                     .addEmbeds(getEmbed(startingIndex, maximum, args).build()))
-                .buttonInteractionHandler(JavaCalls.deferringHandler(this))
                 .build()
     }
 

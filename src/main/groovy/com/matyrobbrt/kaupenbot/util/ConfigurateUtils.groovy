@@ -46,7 +46,8 @@ class ConfigurateUtils {
         if (!Files.exists(configPath)) {
             try {
                 final var node = loader.loadToReference()
-                Files.createDirectories(configPath.getParent())
+                if (configPath.parent !== null)
+                    Files.createDirectories(configPath.getParent())
                 Files.createFile(configPath)
                 configSerializer.serialize(type, defaultConfig, node.node())
                 node.save()

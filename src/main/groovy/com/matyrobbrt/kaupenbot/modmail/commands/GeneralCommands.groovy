@@ -1,5 +1,4 @@
 package com.matyrobbrt.kaupenbot.modmail.commands
-
 import com.jagrosh.jdautilities.command.SlashCommand
 import com.jagrosh.jdautilities.command.SlashCommandEvent
 import com.matyrobbrt.jdahelper.pagination.Paginator
@@ -81,19 +80,20 @@ final class UnBlackListCommand extends SlashCommand {
 }
 
 @CompileStatic
+@Newify([OptionData, EmbedBuilder])
 final class TicketsCommand extends PaginatedSlashCommand {
 
     TicketsCommand() {
         super(ModMail.paginator('tickets-cmd')
                 .buttonsOwnerOnly(true)
                 .buttonOrder(Paginator.DEFAULT_BUTTON_ORDER)
-                .itemsPerPage(10))
+                .itemsPerPage(10), true)
         name = 'tickets'
         guildOnly = true
         help = 'List all tickets a user has had.'
         userPermissions = [Permission.MODERATE_MEMBERS]
         options = [
-                new OptionData(OptionType.USER, 'user', 'The user whose tickets to list.', true)
+                OptionData(OptionType.USER, 'user', 'The user whose tickets to list.', true)
         ]
     }
 
@@ -102,7 +102,7 @@ final class TicketsCommand extends PaginatedSlashCommand {
         final userId = arguments[0] as long
         final tickets = ModMail.database.withExtension(TicketsDAO) { it.getThreads(userId) }
         final threads = ModMail.guild.getTextChannelById(ModMail.config.loggingChannel).retrieveArchivedPublicThreadChannels().submit().get()
-        return new EmbedBuilder().tap {
+        return EmbedBuilder().tap {
             sentNow()
             color = Color.RED
             description = "<@${userId}>'s tickets:\n"

@@ -8,8 +8,8 @@ import com.matyrobbrt.jdahelper.pagination.Paginator
 import com.matyrobbrt.jdahelper.pagination.PaginatorBuilder
 import com.matyrobbrt.kaupenbot.commands.WarnCommand
 import com.matyrobbrt.kaupenbot.commands.WarningCommand
-import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.db.Warning
+import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.util.ConfigurateUtils
 import com.matyrobbrt.kaupenbot.util.Constants
@@ -130,4 +130,11 @@ final class BotConstants {
 class Config {
     long moderatorRole
     String[] prefixes = new String[] { '!', '-' }
+    LoggingChannels loggingChannels = new LoggingChannels()
+
+    @CompileStatic
+    @ConfigSerializable
+    static final class LoggingChannels {
+        long moderationLogs
+    }
 }

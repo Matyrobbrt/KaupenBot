@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.exceptions.ErrorHandler
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -91,7 +92,7 @@ final class WarnCommand extends Command {
         final log = { boolean didDm ->
             logWarning(event.guild, toWarn, warnId, event.member, didDm)
 
-            String message = "⚠ Warned `${toWarn.asTag}`.\n **Reason**: $reason"
+            String message = "⚠ Warned `${toWarn.asTag}`.\n**Reason**: $reason"
 
             if (!didDm) message += '\n*User could not be messaged.*'
 
@@ -142,7 +143,7 @@ final class AddWarn extends SlashCommand implements CallbackCommand {
 
                 if (!didDm) message += '\n*User could not be messaged.*'
 
-                reply(message).queue()
+                hook.sendMessage(message).queue()
             }
             userToWarn.openPrivateChannel()
                     .flatMap {
@@ -261,15 +262,49 @@ static boolean canInteract(final SlashCommandEvent event, final Member target) {
     return true
 }
 
-// TODO logging
 static void logWarning(Guild guild, User warnedUser, UUID warnId, Member moderator, boolean managedToDM) {
-
+    final warn = withExtension { it.getWarning(warnId.toString()) }
+    KaupenBot.jda.getChannelById(MessageChannel, KaupenBot.config.loggingChannels.moderationLogs)
+            .sendMessageEmbeds(embed {
+                sentNow()
+                color = Color.RED
+                title = 'New warning'
+                description = "${mentionAndID(warnedUser.idLong)} has been warned by ${mentionAndID(moderator.idLong)}."
+                addField('Reason', warn.reason, false)
+                addField('Warning ID', warnId.toString(), false)
+                setAuthor(moderator.effectiveName, null, moderator.effectiveAvatarUrl)
+                setFooter("User ID: $warnedUser.id", warnedUser.effectiveAvatarUrl)
+                if (!managedToDM) {
+                    appendDescription('\n*User could not be messages.*')
+                }
+            }).queue()
 }
 /**
  * @param warning if {@code null}, all warnings were cleared
  */
 static void logClear(Guild guild, User warnedUser, @Nullable Warning warning, Member moderator) {
-
+    final channel = KaupenBot.jda.getChannelById(MessageChannel, KaupenBot.config.loggingChannels.moderationLogs)
+    if (warning === null) {
+        channel.sendMessageEmbeds(embed {
+            sentNow()
+            color = Color.GREEN
+            title = 'Warnings cleared'
+            thumbnail = warnedUser.effectiveAvatarUrl
+            description = "All the warnings of ${mentionAndID(warnedUser.idLong)} have been cleared!"
+            setFooter("Moderator ID: $moderator.id", moderator.effectiveAvatarUrl)
+        }).queue()
+    } else {
+        channel.sendMessageEmbeds(embed {
+            sentNow()
+            color = Color.GREEN
+            title = 'Warning cleared'
+            description = "One of the warnings of ${mentionAndID(warnedUser.idLong)} has been removed!"
+            thumbnail = warnedUser.effectiveAvatarUrl
+            addField('Old reason:', warning.reason, false)
+            addField('Old moderator:', mentionAndID(warning.moderatorId), false)
+            setFooter("Moderator ID: $moderator.id", moderator.effectiveAvatarUrl)
+        }).queue()
+    }
 }
 
 static <R> R withExtension(Function<WarningsDAO, R> callback) {

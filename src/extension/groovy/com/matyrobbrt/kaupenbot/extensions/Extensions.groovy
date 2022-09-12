@@ -45,6 +45,6 @@ class Extensions {
 
     @Nullable
     static Member getAt(Guild self, @Nonnull UserSnowflake user) {
-        self.getMember(user)
+        self.retrieveMember(user).submit(true).get()
     }
 }

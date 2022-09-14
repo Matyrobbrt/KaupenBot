@@ -79,7 +79,7 @@ static void sendPrefix(CommandEvent event, boolean isAnonymous) {
         }
     }
 
-    ModMailListener.doReply(thread, event.member, isAnonymous, reference, event.args, {
+    ModMailListener.doReply(thread, event.member, isAnonymous, reference, event.args, event.message.attachments, {
         event.message.addReaction(ModMailListener.SUCCESS_EMOJI).queue()
     }, {
         event.message.reply(it).flatMap { event.message.addReaction(ModMailListener.FAILED_EMOJI) }
@@ -99,7 +99,7 @@ static void sendSlash(SlashCommandEvent event, boolean isAnonymous) {
     }
 
     final text = event.getOption('message')?.asString
-    ModMailListener.doReply(thread, event.member, isAnonymous, null, text, {
+    ModMailListener.doReply(thread, event.member, isAnonymous, null, text, java.util.List.of(), {
         event.reply('Successfully sent message!').setEphemeral(true).queue()
         WebhookMessageSender.send(
                 ModMailListener.WEBHOOKS[thread],

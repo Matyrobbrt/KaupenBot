@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.exceptions.ErrorHandler
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.ErrorResponse
 import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
@@ -112,9 +113,10 @@ final class ModMailListener extends ListenerAdapter {
                 if (thread != null) {
                     WebhookMessageSender.send(
                             WEBHOOKS[thread],
-                            createMessageReceived(event.message),
+                            event.message.contentRaw.isEmpty() ? null : createMessageReceived(event.message),
                             event.message.author.name,
-                            event.message.author.effectiveAvatarUrl
+                            event.message.author.effectiveAvatarUrl,
+                            WebhookMessageSender.Attachment.from(event.message.attachments)
                     ).thenAccept {
                         ModMail.database.useExtension(TicketsDAO) { dao ->
                             dao.insertMessageAssociation(it.id, event.message.idLong)
@@ -165,7 +167,11 @@ final class ModMailListener extends ListenerAdapter {
             ModMail.database.useExtension(TicketsDAO) { dao ->
                 dao.insertThread(event.author.idLong, it.idLong, true)
             }
-            WebhookMessageSender.send(WEBHOOKS[it], createMessageReceived(event.message), event.message.author.name, event.message.author.effectiveAvatarUrl)
+            WebhookMessageSender.send(WEBHOOKS[it],
+                    event.message.contentRaw.isEmpty() ? null : createMessageReceived(event.message),
+                    event.message.author.name, event.message.author.effectiveAvatarUrl,
+                    WebhookMessageSender.Attachment.from(event.message.attachments)
+            )
         }.thenAccept {
             ModMail.database.useExtension(TicketsDAO) { dao ->
                 dao.insertMessageAssociation(it.id, event.message.idLong)
@@ -187,14 +193,14 @@ final class ModMailListener extends ListenerAdapter {
                 it.getAssociatedMessage(ref.messageIdLong)
             }
         }
-        doReply(thread, event.member, ModMail.config.anonymousByDefault, reference, event.message.contentRaw, {
+        doReply(thread, event.member, ModMail.config.anonymousByDefault, reference, event.message.contentRaw, event.message.attachments, {
             event.message.addReaction(SUCCESS_EMOJI).queue()
         }, {
             event.message.reply(it).flatMap { event.message.addReaction(FAILED_EMOJI) }
         })
     }
 
-    static void doReply(ThreadChannel thread, Member moderator, boolean anonymous, Long reference, String message, Runnable onSuccess, Function<String, RestAction> onFailure, boolean checkGoodThread = false) {
+    static void doReply(ThreadChannel thread, Member moderator, boolean anonymous, Long reference, String message, java.util.List<Message.Attachment> attachments, Runnable onSuccess, Function<String, RestAction> onFailure, boolean checkGoodThread = false) {
         final userId = ModMail.database.withExtension(TicketsDAO) {
             it.getUser(thread.idLong, true)
         }
@@ -215,9 +221,13 @@ final class ModMailListener extends ListenerAdapter {
                         } else {
                             setAuthor(moderator.user.asTag, null, moderator.user.effectiveAvatarUrl)
                         }
-                        description = message
+                        if (!message.isEmpty())
+                            description = message
                         setFooter("${moderator.guild.name} | ${moderator.guild.id}", moderator.guild.iconUrl)
-                    }).setMessageReference(reference?.toString())
+                    })
+                    .addFiles(attachments.stream()
+                        .map { FileUpload.fromData(it.proxy.download().get(), it.fileName) }
+                        .toList()).setMessageReference(reference?.toString())
                 }
                 .queue({ onSuccess.run() }, new ErrorHandler()
                         .handle(ErrorResponse.CANNOT_SEND_TO_USER, {

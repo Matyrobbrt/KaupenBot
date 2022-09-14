@@ -29,7 +29,7 @@ application {
     mainClass = 'com.matyrobbrt.kaupenbot.Main'
 }
 tasks.named('run', JavaExec).configure {
-    workingDir = new File("run")
+    workingDir = new File('production')
 }
 
 dependencies {

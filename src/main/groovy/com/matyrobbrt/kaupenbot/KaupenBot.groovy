@@ -6,9 +6,13 @@ import com.matyrobbrt.jdahelper.components.ComponentListener
 import com.matyrobbrt.jdahelper.components.storage.ComponentStorage
 import com.matyrobbrt.jdahelper.pagination.Paginator
 import com.matyrobbrt.jdahelper.pagination.PaginatorBuilder
+import com.matyrobbrt.kaupenbot.api.PluginRegistry
+import com.matyrobbrt.kaupenbot.apiimpl.BasePluginRegistry
+import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
+import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.WarnCommand
 import com.matyrobbrt.kaupenbot.commands.WarningCommand
-import com.matyrobbrt.kaupenbot.db.Warning
+import com.matyrobbrt.kaupenbot.api.util.Warning
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.util.ConfigurateUtils
@@ -24,6 +28,8 @@ import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
+import org.codehaus.groovy.control.CompilerConfiguration
+import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.jdbi.v3.core.Jdbi
 import org.jetbrains.annotations.NotNull
 import org.slf4j.Logger
@@ -51,6 +57,7 @@ final class KaupenBot {
 
     public static final Logger log = LoggerFactory.get()
 
+    static PluginRegistry plugins
     static Jdbi database
     static Config config
     static JDA jda
@@ -93,7 +100,7 @@ final class KaupenBot {
 
         jda = JDABuilder.createLight(token)
                 .enableIntents(BotConstants.INTENTS)
-                .addEventListeners(new DismissListener(), new ThreadListeners(), client)
+                .addEventListeners(new DismissListener(), new ThreadListeners(), client, components)
                 .addEventListeners(new ListenerAdapter() {
                     @Override
                     void onReady(@NotNull @Nonnull ReadyEvent event) {
@@ -106,6 +113,8 @@ final class KaupenBot {
         Constants.EXECUTOR.scheduleAtFixedRate({
             components.removeComponentsOlderThan(30, ChronoUnit.MINUTES)
         }, 0, 30, TimeUnit.MINUTES)
+
+        BotConstants.preparePlugins()
     }
 }
 
@@ -122,6 +131,30 @@ final class BotConstants {
     @Newify(pattern = '[A-z][A-Za-z0-9_]*')
     static void registerMappers(Jdbi jdbi) {
         jdbi.registerRowMapper(Warning, WarningMapper())
+    }
+
+    static void preparePlugins() {
+        KaupenBot.plugins = new BasePluginRegistry()
+        registerPlugins(KaupenBot.plugins)
+
+        final scriptsDir = Path.of('scripts')
+        final out = scriptsDir.resolve('.out').toAbsolutePath()
+        final loader = new PluginLoader(
+                ConfigurateUtils.CONFIG_WATCH_SERVICE,
+                KaupenBot.plugins as BasePluginRegistry, new GroovyShell(new CompilerConfiguration().tap {
+                    targetDirectory = out.toFile()
+
+                    final imports = new ImportCustomizer()
+                    imports.addStarImports('com.matyrobbrt.kaupenbot.api', 'com.matyrobbrt.kaupenbot.api.plugins')
+                    imports.addImports('java.time.Duration')
+                    addCompilationCustomizers(imports)
+                })
+        )
+        loader.track(scriptsDir, out)
+    }
+
+    static void registerPlugins(PluginRegistry registry) {
+        registry.registerPlugin('warnings', new WarningPluginImpl())
     }
 }
 

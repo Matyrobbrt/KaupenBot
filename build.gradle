@@ -14,9 +14,15 @@ sourceSets {
         compileClasspath += ext.output
         runtimeClasspath += ext.output
     }
+    var api = create('api')
+    main {
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
 }
 configurations {
     extensionImplementation.extendsFrom(implementation)
+    apiImplementation.extendsFrom(implementation)
 }
 
 application {

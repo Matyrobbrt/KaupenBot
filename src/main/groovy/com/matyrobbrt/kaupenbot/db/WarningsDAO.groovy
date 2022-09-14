@@ -1,7 +1,7 @@
 package com.matyrobbrt.kaupenbot.db
 
+import com.matyrobbrt.kaupenbot.api.util.Warning
 import groovy.transform.CompileStatic
-import groovy.transform.TupleConstructor
 import org.jdbi.v3.core.mapper.RowMapper
 import org.jdbi.v3.core.statement.StatementContext
 import org.jdbi.v3.sqlobject.customizer.Bind
@@ -58,15 +58,6 @@ final class WarningMapper implements RowMapper<Warning> {
                 rs.getTimestamp('timestamp').toInstant()
         )
     }
-}
-
-@CompileStatic
-@TupleConstructor
-final class Warning {
-    long userId, guildId, moderatorId
-    UUID warnId
-    String reason
-    Instant timestamp
 
     static UUID insert(WarningsDAO self, long user, long guild, String reason, long moderator, Instant timestamp = Instant.now()) {
         final var id = UUID.randomUUID()

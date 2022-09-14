@@ -4,8 +4,12 @@ import com.jagrosh.jdautilities.command.Command
 import com.jagrosh.jdautilities.command.CommandEvent
 import com.jagrosh.jdautilities.command.SlashCommand
 import com.jagrosh.jdautilities.command.SlashCommandEvent
+import com.matyrobbrt.jdahelper.components.ComponentListener
+import com.matyrobbrt.jdahelper.components.context.ButtonInteractionContext
 import com.matyrobbrt.kaupenbot.KaupenBot
-import com.matyrobbrt.kaupenbot.db.Warning
+import com.matyrobbrt.kaupenbot.api.plugins.WarningsPlugin
+import com.matyrobbrt.kaupenbot.api.util.Warning
+import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.db.WarningsDAO
 import com.matyrobbrt.kaupenbot.util.CallbackCommand
 import com.matyrobbrt.kaupenbot.util.PaginatedSlashCommand
@@ -18,9 +22,11 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.UserSnowflake
 import net.dv8tion.jda.api.exceptions.ErrorHandler
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.requests.ErrorResponse
 import net.dv8tion.jda.api.utils.TimeFormat
 import org.jetbrains.annotations.Nullable
@@ -38,6 +44,10 @@ final class WarningCommand extends SlashCommand {
     public static final Permission[] REQUIRED_PERMISSIONS = new Permission[]{
             Permission.MODERATE_MEMBERS
     }
+
+    public static final ComponentListener WARN_ACTION_LISTENER = KaupenBot.getComponentListener('warn-action')
+        .onButtonInteraction(WarningCommands::onButton)
+        .build()
 
     WarningCommand() {
         super()
@@ -88,7 +98,7 @@ final class WarnCommand extends Command {
             return
         }
 
-        final warnId = withExtension { Warning.insert(it, toWarn.idLong, event.guild.idLong, reason, event.member.idLong) }
+        final warnId = withExtension { WarningMapper.insert(it, toWarn.idLong, event.guild.idLong, reason, event.member.idLong) }
         final log = { boolean didDm ->
             logWarning(event.guild, toWarn, warnId, event.member, didDm)
 
@@ -96,7 +106,12 @@ final class WarnCommand extends Command {
 
             if (!didDm) message += '\n*User could not be messaged.*'
 
-            event.message.reply(message).queue()
+            final qu = event.message.reply(message)
+            final button = createActionButton(event.guild.idLong, toWarn.idLong, warnId)
+            if (button !== null) {
+                qu.addActionRow(button)
+            }
+            qu.queue()
         }
         toWarn.openPrivateChannel()
                 .flatMap {
@@ -135,7 +150,7 @@ final class AddWarn extends SlashCommand implements CallbackCommand {
             }
             deferReply().queue()
 
-            final warnId = withExtension { Warning.insert(it, userToWarn.idLong, guild.idLong, reason, member.idLong) }
+            final warnId = withExtension { WarningMapper.insert(it, userToWarn.idLong, guild.idLong, reason, member.idLong) }
             final log = { boolean didDm ->
                 logWarning(guild, userToWarn, warnId, member, didDm)
 
@@ -143,7 +158,10 @@ final class AddWarn extends SlashCommand implements CallbackCommand {
 
                 if (!didDm) message += '\n*User could not be messaged.*'
 
-                hook.sendMessage(message).queue()
+                final button = createActionButton(guild.idLong, userToWarn.idLong, warnId)
+                final qu = hook.sendMessage(message)
+                if (button != null) qu.addActionRow(button)
+                qu.queue()
             }
             userToWarn.openPrivateChannel()
                     .flatMap {
@@ -224,7 +242,7 @@ final class ClearWarn extends SlashCommand implements CallbackCommand {
             if (warnId.isBlank()) {
                 withExtension { it.clearAll(userToWarn.idLong, guild.idLong) }
                 logClear(guild, userToWarn, null, member)
-                reply("Sucessfully cleared all `$userToWarn.asTag`'s warnings!").setEphemeral(true).queue()
+                reply("Sucessfully cleared all `$userToWarn.asTag`'s warnings!").queue()
             } else {
                 final var warnExists = withExtension { it.getReasonOptional(warnId).isPresent() }
                 if (!warnExists) {
@@ -235,7 +253,7 @@ final class ClearWarn extends SlashCommand implements CallbackCommand {
                 final doc = withExtension { it.getWarning(warnId) }
                 withExtension { it.deleteById(warnId) }
                 logClear(guild, userToWarn, doc, member)
-                reply("Sucessfully cleared `$userToWarn.asTag`'s warning!").setEphemeral(true).queue()
+                reply("Sucessfully cleared `$userToWarn.asTag`'s warning!").queue()
             }
         }
     }
@@ -278,6 +296,7 @@ static void logWarning(Guild guild, User warnedUser, UUID warnId, Member moderat
                     appendDescription('\n*User could not be messages.*')
                 }
             }).queue()
+
 }
 /**
  * @param warning if {@code null}, all warnings were cleared
@@ -305,6 +324,47 @@ static void logClear(Guild guild, User warnedUser, @Nullable Warning warning, Me
             setFooter("Moderator ID: $moderator.id", moderator.effectiveAvatarUrl)
         }).queue()
     }
+}
+
+@Nullable
+static net.dv8tion.jda.api.interactions.components.buttons.Button createActionButton(final long guildId, final long userId, final UUID warnId) {
+    final warnCount = withExtension { it.getWarningsForUser(userId, guildId) }
+    final action = KaupenBot.plugins[WarningsPlugin].getAction(warnCount.size())
+    if (action === null) return null
+    return WarningCommand.WARN_ACTION_LISTENER.createButton(
+            ButtonStyle.SECONDARY, action.type.asButtonLabel(action.duration), null, com.matyrobbrt.jdahelper.components.Component.Lifespan.TEMPORARY,
+            [warnId.toString(), userId.toString(), warnCount.size().toString()]
+    )
+}
+
+static void onButton(final ButtonInteractionContext context) {
+    if (!context.member.hasPermission(Permission.MODERATE_MEMBERS)) {
+        context.replyProhibited('You cannot use this button!').queue()
+        return
+    }
+
+    final warnId = context.arguments[0]
+    final userId = context.arguments[1]
+    final warningNumber = Integer.parseInt(context.arguments[2])
+
+    final action = KaupenBot.plugins[WarningsPlugin].getAction(warningNumber)
+    if (action === null) {
+        context.replyProhibited("There no longer is a punishment configured for reaching $warningNumber warnings.").queue()
+        return
+    }
+
+    context.guild.retrieveMember(UserSnowflake.fromId(userId))
+        .flatMap { action.type.apply(it, action.duration)
+            .reason(action.getReason(
+                    withExtension { it.getWarning(warnId) },
+                    "Reached warning number $warningNumber: $warnId"
+            )) }
+        .flatMap {
+            context.event.reply('Applied punishment: ' + action.type.asButtonLabel(action.duration)).queue()
+        }
+        .queue {
+            context.event.message.disableButtons()
+        }
 }
 
 static <R> R withExtension(Function<WarningsDAO, R> callback) {

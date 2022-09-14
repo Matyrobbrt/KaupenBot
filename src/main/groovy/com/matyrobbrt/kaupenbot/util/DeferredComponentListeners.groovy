@@ -7,8 +7,8 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 final class DeferredComponentListeners {
-    private ComponentManager manager;
-    private final List<ComponentListener> deferredListeners = Collections.synchronizedList(new ArrayList<>());
+    private ComponentManager manager
+    private final List<ComponentListener> deferredListeners = Collections.synchronizedList(new ArrayList<>())
 
     ComponentManager createManager(final ComponentStorage storage) {
         this.manager = new ComponentManager(storage, deferredListeners);

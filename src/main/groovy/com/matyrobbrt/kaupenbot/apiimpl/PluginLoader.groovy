@@ -28,7 +28,8 @@ class PluginLoader {
 
     void track(Path directory, Path outPath) {
         log.debug('Tracking directory {}', directory)
-        Files.walk(outPath).forEach { if (!Files.isDirectory(it)) Files.delete(it) }
+        if (Files.exists(outPath))
+            Files.walk(outPath).forEach { if (!Files.isDirectory(it)) Files.delete(it) }
         Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {

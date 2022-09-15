@@ -1,4 +1,4 @@
-package com.matyrobbrt.kaupenbot.commands
+package com.matyrobbrt.kaupenbot.commands.moderation
 
 import com.jagrosh.jdautilities.command.Command
 import com.jagrosh.jdautilities.command.CommandEvent
@@ -35,8 +35,8 @@ import java.awt.*
 import java.util.List
 import java.util.function.Function
 
-import static com.matyrobbrt.kaupenbot.commands.WarningCommand.REQUIRED_PERMISSIONS
-import static com.matyrobbrt.kaupenbot.commands.WarningCommands.*
+import static WarningCommand.REQUIRED_PERMISSIONS
+import static com.matyrobbrt.kaupenbot.commands.moderation.WarningCommands.*
 
 @CompileStatic
 final class WarningCommand extends SlashCommand {
@@ -242,7 +242,7 @@ final class ClearWarn extends SlashCommand implements CallbackCommand {
             if (warnId.isBlank()) {
                 withExtension { it.clearAll(userToWarn.idLong, guild.idLong) }
                 logClear(guild, userToWarn, null, member)
-                reply("Sucessfully cleared all `$userToWarn.asTag`'s warnings!").queue()
+                reply("Successfully cleared all `$userToWarn.asTag`'s warnings!").queue()
             } else {
                 final var warnExists = withExtension { it.getReasonOptional(warnId).isPresent() }
                 if (!warnExists) {
@@ -253,7 +253,7 @@ final class ClearWarn extends SlashCommand implements CallbackCommand {
                 final doc = withExtension { it.getWarning(warnId) }
                 withExtension { it.deleteById(warnId) }
                 logClear(guild, userToWarn, doc, member)
-                reply("Sucessfully cleared `$userToWarn.asTag`'s warning!").queue()
+                reply("Successfully cleared `$userToWarn.asTag`'s warning!").queue()
             }
         }
     }
@@ -360,7 +360,7 @@ static void onButton(final ButtonInteractionContext context) {
                     "Reached warning number $warningNumber: $warnId"
             )) }
         .flatMap {
-            context.event.reply('Applied punishment: ' + action.type.asButtonLabel(action.duration)).queue()
+            context.event.reply('Applied punishment: ' + action.type.asButtonLabel(action.duration))
         }
         .queue {
             context.event.message.disableButtons()

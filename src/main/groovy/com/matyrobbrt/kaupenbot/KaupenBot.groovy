@@ -13,8 +13,9 @@ import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
-import com.matyrobbrt.kaupenbot.commands.WarnCommand
-import com.matyrobbrt.kaupenbot.commands.WarningCommand
+import com.matyrobbrt.kaupenbot.commands.moderation.PurgeCommand
+import com.matyrobbrt.kaupenbot.commands.moderation.WarnCommand
+import com.matyrobbrt.kaupenbot.commands.moderation.WarningCommand
 import com.matyrobbrt.kaupenbot.api.util.Warning
 import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
 import com.matyrobbrt.kaupenbot.db.WarningMapper
@@ -101,7 +102,7 @@ final class KaupenBot {
             prefixes = config.prefixes
             activity = null
 
-            addSlashCommand(WarningCommand())
+            addSlashCommands(WarningCommand(), PurgeCommand())
             addCommand(WarnCommand())
         }.build()
 

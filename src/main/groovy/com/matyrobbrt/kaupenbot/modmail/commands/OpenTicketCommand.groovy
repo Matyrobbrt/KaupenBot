@@ -23,7 +23,7 @@ final class OpenTicketCommand extends SlashCommand implements CallbackCommand {
         name = 'open-ticket'
         help = 'Opens a ticket with an user'
         userPermissions = new Permission[]{Permission.MODERATE_MEMBERS}
-        options.add(new OptionData(OptionType.USER, 'user', 'The user to open a ticket with.'))
+        options.add(new OptionData(OptionType.USER, 'user', 'The user to open a ticket with.', true))
         options.add(new OptionData(OptionType.STRING, 'message', 'The message to send to the user.'))
         setCallback {
             final user = member('user')

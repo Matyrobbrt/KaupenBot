@@ -35,8 +35,8 @@ class Extensions {
     }
 
     @NotNull
-    static String string(final SlashCommandEvent event, final String name) {
-        return event.getOption(name)?.asString ?: ''
+    static String string(final SlashCommandEvent event, final String name, final String defaultValue = '') {
+        return event.getOption(name)?.asString ?: defaultValue
     }
     @Nullable
     static User user(final SlashCommandEvent event, final String name) {
@@ -45,6 +45,11 @@ class Extensions {
     @Nullable
     static Member member(final SlashCommandEvent event, final String name) {
         event.getOption(name)?.asMember
+    }
+    static int integer(final SlashCommandEvent event, final String name, final int defaultValue = 1) {
+        final opt = event.getOption(name)
+        if (opt === null) return defaultValue
+        return opt.asInt
     }
 
     @Nullable

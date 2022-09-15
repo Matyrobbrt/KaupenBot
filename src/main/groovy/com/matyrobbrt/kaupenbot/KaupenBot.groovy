@@ -1,5 +1,6 @@
 package com.matyrobbrt.kaupenbot
 
+import com.jagrosh.jdautilities.command.CommandClient
 import com.jagrosh.jdautilities.command.CommandClientBuilder
 import com.matyrobbrt.jdahelper.DismissListener
 import com.matyrobbrt.jdahelper.components.ComponentListener
@@ -9,11 +10,15 @@ import com.matyrobbrt.jdahelper.pagination.PaginatorBuilder
 import com.matyrobbrt.kaupenbot.api.PluginRegistry
 import com.matyrobbrt.kaupenbot.apiimpl.BasePluginRegistry
 import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
+import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
+import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.WarnCommand
 import com.matyrobbrt.kaupenbot.commands.WarningCommand
 import com.matyrobbrt.kaupenbot.api.util.Warning
+import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
 import com.matyrobbrt.kaupenbot.db.WarningMapper
+import com.matyrobbrt.kaupenbot.listener.AutoGistDetection
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.util.ConfigurateUtils
 import com.matyrobbrt.kaupenbot.util.Constants
@@ -26,6 +31,7 @@ import io.github.cdimascio.dotenv.Dotenv
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.events.ReadyEvent
+import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
 import org.codehaus.groovy.control.CompilerConfiguration
@@ -61,6 +67,7 @@ final class KaupenBot {
     static Jdbi database
     static Config config
     static JDA jda
+    static CommandClient client
 
     static void start(Dotenv env) throws IOException {
         final token = env.get('BOT_TOKEN')
@@ -89,7 +96,7 @@ final class KaupenBot {
                 new Config()
         ).value.get()
 
-        final client = CommandClientBuilder().tap {
+        client = CommandClientBuilder().tap {
             ownerId = '0000000000'
             prefixes = config.prefixes
             activity = null
@@ -97,6 +104,13 @@ final class KaupenBot {
             addSlashCommand(WarningCommand())
             addCommand(WarnCommand())
         }.build()
+
+        final List<EventListener> otherListeners = []
+        if (env.get('GIST_TOKEN') !== null) {
+            final gistToken = env.get('GIST_TOKEN')
+            client.addContextMenu(new GistContextMenu(gistToken))
+            otherListeners.add(new AutoGistDetection(gistToken))
+        }
 
         jda = JDABuilder.createLight(token)
                 .enableIntents(BotConstants.INTENTS)
@@ -107,6 +121,7 @@ final class KaupenBot {
                         log.warn('KaupenBot is ready to work. Logged in as: {} ({})', event.getJDA().selfUser.asTag, event.getJDA().selfUser.id)
                     }
                 })
+                .addEventListeners(otherListeners.toArray())
                 .build()
 
         BotConstants.registerMappers(database)
@@ -155,6 +170,11 @@ final class BotConstants {
 
     static void registerPlugins(PluginRegistry registry) {
         registry.registerPlugin('warnings', new WarningPluginImpl())
+
+        final events = new EventsPluginImpl()
+        KaupenBot.jda.addEventListener(events)
+        registry.registerPlugin('events', events)
+        registry.registerPlugin('commands', new CommandsPluginImpl(KaupenBot.client))
     }
 }
 

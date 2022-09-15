@@ -2,7 +2,7 @@ package com.matyrobbrt.kaupenbot.listener
 
 import com.matyrobbrt.kaupenbot.KaupenBot
 import groovy.transform.CompileStatic
-import net.dv8tion.jda.api.entities.ChannelType
+import net.dv8tion.jda.api.entities.ThreadChannel
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.jetbrains.annotations.NotNull
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 class ThreadListeners extends ListenerAdapter {
     @Override
     void onChannelCreate(@NotNull ChannelCreateEvent event) {
-        if (event.channel.type == ChannelType.GUILD_PUBLIC_THREAD) {
+        if (event.channel instanceof ThreadChannel) {
             final thread = event.channel.asThreadChannel()
             thread.join()
                 .flatMap { thread.sendMessage('New thread has been created!') }

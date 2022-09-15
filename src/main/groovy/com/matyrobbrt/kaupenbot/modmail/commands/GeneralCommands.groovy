@@ -43,7 +43,7 @@ final class BlackListCommand extends SlashCommand {
         }
 
         event.guild.addRoleToMember(user, event.guild.getRoleById(ModMail.config.blacklistedRole))
-            .flatMap { event.reply("Blacklisted $user.asMention!") }
+            .flatMap { event.reply("Blacklisted $user.asMention!").setAllowedMentions(List.of()) }
             .queue()
     }
 }
@@ -74,7 +74,7 @@ final class UnBlackListCommand extends SlashCommand {
         }
 
         event.guild.removeRoleFromMember(user, event.guild.getRoleById(ModMail.config.blacklistedRole))
-                .flatMap { event.reply("Un-blacklisted $user.asMention!") }
+                .flatMap { event.reply("Un-blacklisted $user.asMention!").setAllowedMentions(List.of()) }
                 .queue()
     }
 }
@@ -112,7 +112,7 @@ final class TicketsCommand extends PaginatedSlashCommand {
                     if (thread === null)
                         thread = threads.find { id -> id.idLong == it }
                     if (thread != null) {
-                        appendDescription("$thread.asMention - ${TimeFormat.DATE_TIME_SHORT.format(thread.timeCreated)}. Open: ${thread.archived}\n")
+                        appendDescription("$thread.asMention - ${TimeFormat.DATE_TIME_SHORT.format(thread.timeCreated)}. Open: ${!thread.archived}\n")
                     }
                 }
             description = descriptionBuilder.toString().trim()

@@ -138,7 +138,7 @@ static void close(ThreadChannel thread, Member moderator, boolean anonymous, Str
                     it.editMessage(
                             MessageEditData.fromEmbeds(embed {
                                 sentNow()
-                                color = Color.GREEN
+                                color = Color.RED
                                 title = '~~New Ticket~~ Ticked has been closed'
                                 description = "Ticked has been closed by $moderator.asMention. Reason: $reason"
                                 setFooter("${ch.user.asTag} | ${ch.user.id}", ch.user.effectiveAvatarUrl)

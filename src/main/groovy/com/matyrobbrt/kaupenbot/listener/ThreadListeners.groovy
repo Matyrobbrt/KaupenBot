@@ -2,6 +2,7 @@ package com.matyrobbrt.kaupenbot.listener
 
 import com.matyrobbrt.kaupenbot.KaupenBot
 import groovy.transform.CompileStatic
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.ThreadChannel
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -18,7 +19,7 @@ class ThreadListeners extends ListenerAdapter {
             thread.join()
                 .flatMap { thread.sendMessage('New thread has been created!') }
                 .delay(1, TimeUnit.SECONDS)
-                .flatMap { it.editMessage("<@&${KaupenBot.config.moderatorRole}> you may want to check out this thread!") }
+                .flatMap { it.editMessage("<@&${KaupenBot.config.moderatorRole}> you may want to check out this thread!").setAllowedMentions([Message.MentionType.ROLE]) }
                 .delay(2, TimeUnit.SECONDS)
                 .flatMap { it.delete() }
                 .queue()

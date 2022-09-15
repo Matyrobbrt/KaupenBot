@@ -40,7 +40,11 @@ class Extensions {
     }
     @Nullable
     static User user(final SlashCommandEvent event, final String name) {
-        return event.getOption(name)?.asUser
+        event.getOption(name)?.asUser
+    }
+    @Nullable
+    static Member member(final SlashCommandEvent event, final String name) {
+        event.getOption(name)?.asMember
     }
 
     @Nullable

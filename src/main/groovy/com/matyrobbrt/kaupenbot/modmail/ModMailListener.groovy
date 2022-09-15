@@ -79,7 +79,7 @@ final class ModMailListener extends ListenerAdapter {
         // TODO handle archival
     }
 
-    private static MessageCreateData makeInitialMessage(Member member) {
+    static MessageCreateData makeInitialMessage(Member member) {
         return new MessageCreateBuilder()
             .setContent(Arrays.stream(ModMail.config.pingRoles).map { "<@&${it}>" }.toList().join(" "))
             .addEmbeds(embed {

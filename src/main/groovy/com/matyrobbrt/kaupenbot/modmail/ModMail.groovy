@@ -74,7 +74,7 @@ final class ModMail {
 
         final slashCommands = [
                 new BlackListCommand(), new UnBlackListCommand(),
-                new TicketsCommand()
+                new TicketsCommand(), new OpenTicketCommand()
         ] as List<SlashCommand>
         final commands = [
                 new AReplyCommand(), new ReplyCommand(),

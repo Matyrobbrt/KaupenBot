@@ -8,19 +8,24 @@ import com.matyrobbrt.jdahelper.components.storage.ComponentStorage
 import com.matyrobbrt.jdahelper.pagination.Paginator
 import com.matyrobbrt.jdahelper.pagination.PaginatorBuilder
 import com.matyrobbrt.kaupenbot.api.PluginRegistry
+import com.matyrobbrt.kaupenbot.api.util.Warning
 import com.matyrobbrt.kaupenbot.apiimpl.BasePluginRegistry
 import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
+import com.matyrobbrt.kaupenbot.commands.EvalCommand
+import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
 import com.matyrobbrt.kaupenbot.commands.moderation.PurgeCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.WarnCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.WarningCommand
-import com.matyrobbrt.kaupenbot.api.util.Warning
-import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.AutoGistDetection
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
+import com.matyrobbrt.kaupenbot.tricks.AddTrickCommand
+import com.matyrobbrt.kaupenbot.tricks.RunTrickCommand
+import com.matyrobbrt.kaupenbot.tricks.TrickCommand
+import com.matyrobbrt.kaupenbot.tricks.Tricks
 import com.matyrobbrt.kaupenbot.util.ConfigurateUtils
 import com.matyrobbrt.kaupenbot.util.Constants
 import com.matyrobbrt.kaupenbot.util.DeferredComponentListeners
@@ -104,9 +109,21 @@ final class KaupenBot {
 
             addSlashCommands(WarningCommand(), PurgeCommand())
             addCommand(WarnCommand())
+            EvalCommand().tap {
+                addSlashCommand(it)
+                addCommand(it)
+            }
+            // TODO slash command with modal for add trick
+            addCommand(AddTrickCommand())
+            addSlashCommand(TrickCommand())
+
+            Tricks.getTricks().forEach { tr ->
+                addCommand(new RunTrickCommand.Prefix(tr))
+            }
         }.build()
 
         final List<EventListener> otherListeners = []
+        otherListeners.add(new EvalCommand.ModalListener())
         if (env.get('GIST_TOKEN') !== null) {
             final gistToken = env.get('GIST_TOKEN')
             client.addContextMenu(new GistContextMenu(gistToken))

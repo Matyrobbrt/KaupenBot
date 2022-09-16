@@ -2,6 +2,8 @@ package com.matyrobbrt.kaupenbot
 
 import com.jagrosh.jdautilities.command.CommandClient
 import com.jagrosh.jdautilities.command.CommandClientBuilder
+import com.jagrosh.jdautilities.command.ContextMenu
+import com.jagrosh.jdautilities.command.SlashCommand
 import com.matyrobbrt.jdahelper.DismissListener
 import com.matyrobbrt.jdahelper.components.ComponentListener
 import com.matyrobbrt.jdahelper.components.storage.ComponentStorage
@@ -15,10 +17,10 @@ import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
+import com.matyrobbrt.kaupenbot.commands.api.CommandManagerImpl
 import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
-import com.matyrobbrt.kaupenbot.commands.moderation.PurgeCommand
-import com.matyrobbrt.kaupenbot.commands.moderation.SoftBanCommand
+import com.matyrobbrt.kaupenbot.commands.moderation.ModerationExtension
 import com.matyrobbrt.kaupenbot.commands.moderation.WarnCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.WarningCommand
 import com.matyrobbrt.kaupenbot.db.WarningMapper
@@ -42,6 +44,8 @@ import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.interactions.commands.build.CommandData
+import net.dv8tion.jda.api.interactions.commands.localization.ResourceBundleLocalizationFunction
 import net.dv8tion.jda.api.requests.GatewayIntent
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
@@ -110,7 +114,7 @@ final class KaupenBot {
             prefixes = config.prefixes
             activity = null
 
-            addSlashCommands(WarningCommand(), PurgeCommand(), QuoteCommand(), SoftBanCommand())
+            addSlashCommands(WarningCommand(), QuoteCommand())
             addCommand(WarnCommand())
             EvalCommand().tap {
                 addSlashCommand(it)
@@ -135,13 +139,34 @@ final class KaupenBot {
             otherListeners.add(new AutoGistDetection(gistToken))
         }
 
+        final localization = ResourceBundleLocalizationFunction.fromBundles(
+                'localization/commands'
+        ).build()
+        final commands = new CommandManagerImpl(localization)
+        [new ModerationExtension()].each {
+            it.fillCommands(commands)
+        }
+
         jda = JDABuilder.createLight(token)
                 .enableIntents(BotConstants.INTENTS)
-                .addEventListeners(new DismissListener(), new ThreadListeners(), client, components)
+                .addEventListeners(new DismissListener(), new ThreadListeners(), commands, client, components)
                 .addEventListeners(new ListenerAdapter() {
                     @Override
                     void onReady(@NotNull @Nonnull ReadyEvent event) {
                         log.warn('KaupenBot is ready to work. Logged in as: {} ({})', event.getJDA().selfUser.asTag, event.getJDA().selfUser.id)
+
+                        List<CommandData> data = new ArrayList<>();
+
+                        // Build the commands
+                        for (SlashCommand command : client.slashCommands) {
+                            data.add(command.buildCommandData().setLocalizationFunction(localization))
+                        }
+
+                        for (ContextMenu menu : client.contextMenus) {
+                            data.add(menu.buildCommandData().setLocalizationFunction(localization))
+                        }
+
+                        commands.upsert(event.getJDA(), data)
                     }
                 })
                 .addEventListeners(otherListeners.toArray())

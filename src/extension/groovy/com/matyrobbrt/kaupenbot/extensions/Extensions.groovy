@@ -6,6 +6,7 @@ import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.buttons.Button
@@ -35,18 +36,19 @@ class Extensions {
     }
 
     @NotNull
-    static String string(final SlashCommandEvent event, final String name, final String defaultValue = '') {
+    static String string(final SlashCommandInteractionEvent event, final String name, final String defaultValue = '') {
         return event.getOption(name)?.asString ?: defaultValue
     }
     @Nullable
-    static User user(final SlashCommandEvent event, final String name) {
+    static User user(final SlashCommandInteractionEvent event, final String name) {
         event.getOption(name)?.asUser
     }
     @Nullable
-    static Member member(final SlashCommandEvent event, final String name) {
+    static Member member(final SlashCommandInteractionEvent event, final String name) {
         event.getOption(name)?.asMember
     }
-    static int integer(final SlashCommandEvent event, final String name, final int defaultValue = 1) {
+
+    static int integer(final SlashCommandInteractionEvent event, final String name, final int defaultValue = 1) {
         final opt = event.getOption(name)
         if (opt === null) return defaultValue
         return opt.asInt

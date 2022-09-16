@@ -15,8 +15,10 @@ import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
+import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
 import com.matyrobbrt.kaupenbot.commands.moderation.PurgeCommand
+import com.matyrobbrt.kaupenbot.commands.moderation.SoftBanCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.WarnCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.WarningCommand
 import com.matyrobbrt.kaupenbot.db.WarningMapper
@@ -108,7 +110,7 @@ final class KaupenBot {
             prefixes = config.prefixes
             activity = null
 
-            addSlashCommands(WarningCommand(), PurgeCommand(), QuoteCommand())
+            addSlashCommands(WarningCommand(), PurgeCommand(), QuoteCommand(), SoftBanCommand())
             addCommand(WarnCommand())
             EvalCommand().tap {
                 addSlashCommand(it)
@@ -121,6 +123,8 @@ final class KaupenBot {
             Tricks.getTricks().forEach { tr ->
                 addCommand(new RunTrickCommand.Prefix(tr))
             }
+
+            addContextMenus(new AddQuoteContextMenu())
         }.build()
 
         final List<EventListener> otherListeners = []

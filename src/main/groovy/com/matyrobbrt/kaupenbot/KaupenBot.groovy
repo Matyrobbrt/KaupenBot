@@ -22,6 +22,7 @@ import com.matyrobbrt.kaupenbot.commands.moderation.WarningCommand
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.AutoGistDetection
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
+import com.matyrobbrt.kaupenbot.quote.QuoteCommand
 import com.matyrobbrt.kaupenbot.tricks.AddTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.RunTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.TrickCommand
@@ -107,7 +108,7 @@ final class KaupenBot {
             prefixes = config.prefixes
             activity = null
 
-            addSlashCommands(WarningCommand(), PurgeCommand())
+            addSlashCommands(WarningCommand(), PurgeCommand(), QuoteCommand())
             addCommand(WarnCommand())
             EvalCommand().tap {
                 addSlashCommand(it)

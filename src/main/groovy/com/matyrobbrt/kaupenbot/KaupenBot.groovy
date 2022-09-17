@@ -17,9 +17,9 @@ import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
-import com.matyrobbrt.kaupenbot.commands.api.BotExtension
+import com.matyrobbrt.kaupenbot.extensions.BotExtension
 import com.matyrobbrt.kaupenbot.commands.api.CommandManagerImpl
-import com.matyrobbrt.kaupenbot.commands.api.RegisterExtension
+import com.matyrobbrt.kaupenbot.extensions.RegisterExtension
 import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
 import com.matyrobbrt.kaupenbot.commands.moderation.WarnCommand
@@ -163,7 +163,7 @@ final class KaupenBot {
                 extensions.add(it.getConstructor().newInstance() as BotExtension)
             }
         extensions.each {
-            it.fillCommands(commands, client)
+            it.registerCommands(commands, client)
         }
 
         jda = JDABuilder.createLight(token)
@@ -259,6 +259,7 @@ class Config {
     @ConfigSerializable
     static final class LoggingChannels {
         long moderationLogs
+        long leaveJoinLogs
     }
     @CompileStatic
     @ConfigSerializable

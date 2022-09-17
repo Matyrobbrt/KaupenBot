@@ -8,6 +8,8 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
+import net.dv8tion.jda.api.interactions.commands.Command
+import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
@@ -54,6 +56,13 @@ class Extensions {
         return opt.asInt
     }
 
+    @org.jetbrains.annotations.Nullable
+    static <T extends Enum<T>> T enumOption(final SlashCommandInteractionEvent event, final Class<T> clazz, final String name) {
+        final ename = event.getOption(name)?.asString
+        if (ename === null) return null
+        Enum.valueOf(clazz, ename)
+    }
+
     @Nullable
     static Member getAt(Guild self, @Nonnull UserSnowflake user) {
         self.retrieveMember(user).submit(true).get()
@@ -61,6 +70,9 @@ class Extensions {
 
     static ReplyCallbackAction replyProhibited(IReplyCallback self, String message) {
         self.reply("⛔ $message").setEphemeral(true)
+    }
+    static ReplyCallbackAction replyEphemeral(IReplyCallback self, String message) {
+        self.reply(message).setEphemeral(true)
     }
 
     /**
@@ -84,5 +96,9 @@ class Extensions {
 
         self.editMessageComponents(newRows)
                 .queue()
+    }
+
+    static <Z extends Enum<Z>> OptionData addEnum(OptionData self, Class<Z> enumType) {
+        self.addChoices(Arrays.stream(enumType.enumConstants).map { new Command.Choice(it.toString(), it.name()) }.toList())
     }
 }

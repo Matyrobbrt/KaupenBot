@@ -1,7 +1,7 @@
 //file:noinspection UnnecessaryQualifiedReference
 package com.matyrobbrt.kaupenbot.commands.api
 
-import com.jagrosh.jdautilities.command.SlashCommandEvent
+
 import com.matyrobbrt.kaupenbot.util.JavaCalls
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
@@ -48,7 +48,7 @@ final class CommandBuilder {
     }
 
     void action(@DelegatesTo(
-            value = SlashCommandEvent,
+            value = SlashCommandInteractionEvent,
             strategy = Closure.DELEGATE_FIRST
     ) @ClosureParams(value = SimpleType, options = 'net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent') Closure closure) {
         this.callback = closure

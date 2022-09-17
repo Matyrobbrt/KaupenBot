@@ -1,9 +1,7 @@
-package com.matyrobbrt.kaupenbot.commands.extensions
+package com.matyrobbrt.kaupenbot.extensions
 
 import com.jagrosh.jdautilities.command.CommandClient
-import com.matyrobbrt.kaupenbot.commands.api.BotExtension
 import com.matyrobbrt.kaupenbot.commands.api.CommandManager
-import com.matyrobbrt.kaupenbot.commands.api.RegisterExtension
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
@@ -21,7 +19,7 @@ import java.util.function.Function
 @RegisterExtension
 final class ModerationExtension implements BotExtension {
     @Override
-    void fillCommands(CommandManager manager, CommandClient client) {
+    void registerCommands(CommandManager manager, CommandClient client) {
         manager.addCommand {
             name = 'softban'
             description = 'Bans and unbans a member, deleting their messages.'
@@ -70,24 +68,20 @@ final class ModerationExtension implements BotExtension {
                             .mentionRepliedUser(false)
                             .queue()
 
-                    try {
-                        if (msgs.isEmpty()) return
-                        List<RestAction<Void>> list = new ArrayList<>()
-                        TreeSet<Long> sortedIds = new TreeSet<>(Comparator.reverseOrder())
-                        for (final msg : msgs)
-                            if (msg.type.canDelete())
-                                sortedIds.add(msg.idLong)
-                        for (long messageId : sortedIds)
-                            list.add(it.getMessageChannel().deleteMessageById(messageId))
-                        if (!list.isEmpty()) {
-                            final sendIn = it.getMessageChannel()
-                            final mention = it.getMember().getAsMention()
-                            RestAction.allOf(list).flatMap((deleted) ->
-                                sendIn.sendMessage("$mention ✅ Successfully purged ${deleted.size()} messages!")
-                            ).queue()
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace()
+                    if (msgs.isEmpty()) return
+                    List<RestAction<Void>> list = new ArrayList<>()
+                    TreeSet<Long> sortedIds = new TreeSet<>(Comparator.reverseOrder())
+                    for (final msg : msgs)
+                        if (msg.type.canDelete())
+                            sortedIds.add(msg.idLong)
+                    for (long messageId : sortedIds)
+                        list.add(it.getMessageChannel().deleteMessageById(messageId))
+                    if (!list.isEmpty()) {
+                        final sendIn = it.getMessageChannel()
+                        final mention = it.getMember().getAsMention()
+                        RestAction.allOf(list).flatMap((deleted) ->
+                            sendIn.sendMessage("$mention ✅ Successfully purged ${deleted.size()} messages!")
+                        ).queue()
                     }
                 })
             }

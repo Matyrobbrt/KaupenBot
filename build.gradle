@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'groovy'
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 repositories {
     mavenCentral()
@@ -23,6 +24,8 @@ sourceSets {
 configurations {
     extensionImplementation.extendsFrom(implementation)
     apiImplementation.extendsFrom(implementation)
+    shade
+    shade.extendsFrom(implementation)
 }
 
 application {
@@ -65,4 +68,15 @@ tasks.withType(GroovyCompile).configureEach {
     it.groovyOptions.fork = true
     it.groovyOptions.encoding = 'UTF-8'
     it.groovyOptions.optimizationOptions.indy = true
+}
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    manifest.attributes([
+            'Main-Class': application.mainClassName,
+            'Implementation-Version': project.version
+    ])
+    from sourceSets.api.output
+    from sourceSets.extension.output
+    classifier = ''
 }

@@ -1,3 +1,4 @@
+//file:noinspection UnnecessaryQualifiedReference
 package com.matyrobbrt.kaupenbot.commands.api
 
 import com.jagrosh.jdautilities.command.SlashCommandEvent
@@ -7,6 +8,7 @@ import groovy.transform.PackageScope
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.Commands
@@ -28,6 +30,7 @@ final class CommandBuilder {
     final List<Permission> requiredPermissions = []
     final List<Predicate<SlashCommandInteractionEvent>> predicates = []
     Closure callback
+    Closure autoComplete
 
     Consumer<SlashCommandInteractionEvent> getListener() {
         JavaCalls.slashCallback(predicates, callback)
@@ -49,6 +52,32 @@ final class CommandBuilder {
             strategy = Closure.DELEGATE_FIRST
     ) @ClosureParams(value = SimpleType, options = 'net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent') Closure closure) {
         this.callback = closure
+    }
+
+    void autoComplete(@DelegatesTo(
+            value = CommandAutoCompleteInteractionEvent,
+            strategy = Closure.DELEGATE_FIRST
+    ) @ClosureParams(value = SimpleType, options = 'net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent') Closure closure) {
+        this.autoComplete = closure
+    }
+    void autoCompleteOption(String optionName, @DelegatesTo(
+            value = CommandAutoCompleteInteractionEvent,
+            strategy = Closure.DELEGATE_FIRST
+    ) @ClosureParams(value = SimpleType, options = ['java.lang.String', 'net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent']) Closure closure) {
+        final oldAutoComplete = this.autoComplete
+        this.autoComplete {
+            if (oldAutoComplete !== null) {
+                //noinspection UnnecessaryQualifiedReference
+                oldAutoComplete.resolveStrategy = Closure.DELEGATE_FIRST
+                oldAutoComplete.delegate = it
+                oldAutoComplete(it)
+            }
+            if (focusedOption?.name == optionName) {
+                closure.resolveStrategy = Closure.DELEGATE_FIRST
+                closure.delegate = it
+                closure(focusedOption.value, it)
+            }
+        }
     }
 
     void subCommand(@DelegatesTo(value = CommandBuilder, strategy = Closure.DELEGATE_FIRST) Closure subCommand) {

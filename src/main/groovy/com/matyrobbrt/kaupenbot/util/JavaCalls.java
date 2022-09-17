@@ -48,11 +48,11 @@ public class JavaCalls {
     public static Predicate<SlashCommandInteractionEvent> slashPredicate(final Predicate<SlashCommandInteractionEvent> predicate, @Nullable final String message) {
         if (message == null) return predicate;
         return event -> {
-            if (predicate.test(event)) {
+            if (!predicate.test(event)) {
                 Extensions.replyProhibited(event, message).queue();
-                return true;
+                return false;
             }
-            return false;
+            return true;
         };
     }
 }

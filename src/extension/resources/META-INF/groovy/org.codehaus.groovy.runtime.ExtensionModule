@@ -1,4 +1,4 @@
 moduleName=KaupenBot extensions
 moduleVersion=1.0.0
-extensionClasses=com.matyrobbrt.kaupenbot.extensions.Extensions,com.matyrobbrt.kaupenbot.extensions.FutureExtensions
+extensionClasses=com.matyrobbrt.kaupenbot.extensions.Extensions,com.matyrobbrt.kaupenbot.extensions.FutureExtensions,com.matyrobbrt.kaupenbot.extensions.JavaExtensions
 staticExtensionClasses=com.matyrobbrt.kaupenbot.extensions.StaticExtensions

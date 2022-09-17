@@ -17,6 +17,7 @@ import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
+import com.matyrobbrt.kaupenbot.commands.SuggestionExtensions
 import com.matyrobbrt.kaupenbot.commands.api.CommandManagerImpl
 import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
@@ -115,6 +116,7 @@ final class KaupenBot {
             ownerId = '0000000000'
             prefixes = config.prefixes
             activity = null
+            manualUpsert = true
 
             addSlashCommands(WarningCommand(), QuoteCommand())
             addCommand(WarnCommand())
@@ -148,7 +150,9 @@ final class KaupenBot {
         }
         final localization = ResourceBundleLocalizationFunction.fromBundles(bundleName, locales.toArray(DiscordLocale[]::new)).build()
         final commands = new CommandManagerImpl(localization)
-        [new ModerationExtension()].each {
+
+        final extensions = [new ModerationExtension(), new SuggestionExtensions()]
+        extensions.each {
             it.fillCommands(commands)
         }
 
@@ -176,6 +180,7 @@ final class KaupenBot {
                 })
                 .addEventListeners(otherListeners.toArray())
                 .build()
+        extensions.each { it.subscribeEvents(jda) }
 
         BotConstants.registerMappers(database)
         Constants.EXECUTOR.scheduleAtFixedRate({
@@ -237,10 +242,16 @@ class Config {
     long moderatorRole
     String[] prefixes = new String[] { '!', '-' }
     LoggingChannels loggingChannels = new LoggingChannels()
+    Channels channels = new Channels()
 
     @CompileStatic
     @ConfigSerializable
     static final class LoggingChannels {
         long moderationLogs
+    }
+    @CompileStatic
+    @ConfigSerializable
+    static final class Channels {
+        List<Long> suggestionChannels = []
     }
 }

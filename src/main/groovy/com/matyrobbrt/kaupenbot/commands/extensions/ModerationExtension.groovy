@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.requests.RestAction
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -43,7 +44,6 @@ final class ModerationExtension implements BotExtension {
             }
         }
 
-        /* TODO make this work
         manager.addCommand {
             name = 'purge'
             description = 'Purge messages from a channel.'
@@ -55,7 +55,7 @@ final class ModerationExtension implements BotExtension {
             require Permission.MESSAGE_MANAGE
             failIf { it.integer('amount') > 500 }
             action {
-                final int amount = integer('amount')
+                final amount = integer('amount')
                 final user = user('user')
 
                 CompletableFuture<List<Message>> messages
@@ -66,19 +66,32 @@ final class ModerationExtension implements BotExtension {
                 }
                 deferReply(true).queue()
                 messages.thenAccept(msgs -> {
-                    hook.editOriginal("I have found ${msgs.size()} messages, I will now start purging!")
+                    it.getHook().sendMessage("Found ${msgs.size()} messages. Started purge...")
                             .mentionRepliedUser(false)
                             .queue()
 
-                    final List<AtomicBoolean> complete = new ArrayList<>()
-                    msgs.forEach(msg -> complete.add(new AtomicBoolean(false)))
-                    CompletableFuture.allOf(channel.purgeMessages(msgs).toArray(CompletableFuture[]::new))
-                            .thenAccept(action -> channel.sendMessage(
-                                    "$member.asMention ✅ I have successfully purged ${msgs.size()} messages!")
-                                    .queue())
+                    try {
+                        if (msgs.isEmpty()) return
+                        List<RestAction<Void>> list = new ArrayList<>()
+                        TreeSet<Long> sortedIds = new TreeSet<>(Comparator.reverseOrder())
+                        for (final msg : msgs)
+                            if (msg.type.canDelete())
+                                sortedIds.add(msg.idLong)
+                        for (long messageId : sortedIds)
+                            list.add(it.getMessageChannel().deleteMessageById(messageId))
+                        if (!list.isEmpty()) {
+                            final sendIn = it.getMessageChannel()
+                            final mention = it.getMember().getAsMention()
+                            RestAction.allOf(list).flatMap((deleted) ->
+                                sendIn.sendMessage("$mention ✅ Successfully purged ${deleted.size()} messages!")
+                            ).queue()
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace()
+                    }
                 })
             }
-        } */
+        }
     }
 
     static CompletableFuture<List<Message>> getMessages(MessageChannel channel, int amount) {

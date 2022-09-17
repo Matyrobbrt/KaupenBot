@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
 import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
@@ -12,6 +13,7 @@ import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import org.codehaus.groovy.runtime.callsite.BooleanClosureWrapper
 import org.jetbrains.annotations.NotNull
@@ -100,5 +102,14 @@ class Extensions {
 
     static <Z extends Enum<Z>> OptionData addEnum(OptionData self, Class<Z> enumType) {
         self.addChoices(Arrays.stream(enumType.enumConstants).map { new Command.Choice(it.toString(), it.name()) }.toList())
+    }
+
+    @org.jetbrains.annotations.Nullable
+    static RestAction<Message> getMessageByLink(JDA self, String link) {
+        return StaticExtensions.decodeMessageLink(null, link)
+            .map {
+                self.getGuildById(it.guildId())?.getChannelById(MessageChannel, it.channelId())?.retrieveMessageById(it.messageId())
+            }
+            .orElse(null)
     }
 }

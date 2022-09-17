@@ -184,9 +184,10 @@ final class RolePanelsExtension implements BotExtension {
                 replyProhibited('Unknown role!').queue()
             } else {
                 final boolean hadRole = role in member.roles
-                (hadRole ? guild.removeRoleFromMember(user, role) : guild.addRoleToMember(user, role)).flatMap {
-                    replyEphemeral("Successfully ${hadRole ? 'added' : 'removed'} role!")
-                }.queue()
+                (hadRole ? guild.removeRoleFromMember(user, role) : guild.addRoleToMember(user, role))
+                    .reason('Role Selection').flatMap {
+                        replyEphemeral("Successfully ${hadRole ? 'added' : 'removed'} role!")
+                    }.queue()
             }
         }
     }

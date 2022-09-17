@@ -1,8 +1,10 @@
 package com.matyrobbrt.kaupenbot.extensions
 
+import com.jagrosh.jdautilities.commons.utils.SafeIdUtil
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.IMentionable
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
 import org.flywaydb.core.Flyway
 import org.jdbi.v3.core.Jdbi
@@ -50,5 +52,23 @@ class StaticExtensions {
     static String orNone(IMentionable self, List<? extends IMentionable> mentionables) {
         final String str = mentionables.stream().map(IMentionable::getAsMention).collect(Collectors.joining(' '))
         return str.isBlank() ? '_None_' : str
+    }
+
+    static Optional<MessageLinkInformation> decodeMessageLink(Message self, final String link) {
+        final matcher = Message.JUMP_URL_PATTERN.matcher(link)
+        if (!matcher.find()) return Optional.empty()
+
+        try {
+            final long guildId = SafeIdUtil.safeConvert(matcher.group('guild'))
+            final long channelId = SafeIdUtil.safeConvert(matcher.group('channel'))
+            final long messageId = SafeIdUtil.safeConvert(matcher.group('message'))
+
+            return Optional.of(new MessageLinkInformation(guildId, channelId, messageId))
+        } catch (NumberFormatException ignored) {
+            return Optional.empty()
+        }
+    }
+
+    record MessageLinkInformation(long guildId, long channelId, long messageId) {
     }
 }

@@ -84,7 +84,7 @@ final class Tricks {
             final var typeOfList = new TypeToken<List<Trick>>() {
             }.getType()
             try (final reader = path.newReader()) {
-                return GSON.fromJson(reader, typeOfList)
+                return tricks = GSON.fromJson(reader, typeOfList)
             } catch (final IOException exception) {
                 KaupenBot.log.error('Failed to read tricks file: ', exception)
                 tricks = new ArrayList<>()
@@ -144,24 +144,28 @@ final class Trick {
     final List<String> names
 
     void execute(TrickContext context) {
-        ScriptRunner.run([
-                'guild' : ScriptObjects.guild(context.guild),
-                'user': ScriptObjects.user(context.user, true),
-                'args': context.arguments,
-                'member': context.member === null ? null : ScriptObjects.member(context.member, true),
-                'channel': ScriptObjects.messageChannel(context.channel, true),
-                'context': ScriptArgument.make()
-                    .addVoidMethod('reply', 1) {
-                        context.reply(ScriptObjects.message(it, 0))
-                    }
-                    .addVoidMethod('replyEmbed', 1) {
-                        context.replyEmbed(ScriptObjects.embed(it, 0))
-                    }
-                    .addVoidMethod('replyEmbeds', -1) {
-                        context.replyEmbeds(it.stream(i -> ScriptObjects.embed(it, i))
-                            .filter { it !== null }.limit(3).toList())
-                    }
-        ], script)
+        try {
+            ScriptRunner.run([
+                    'guild' : ScriptObjects.guild(context.guild),
+                    'user': ScriptObjects.user(context.user, true),
+                    'args': context.arguments,
+                    'member': context.member === null ? null : ScriptObjects.member(context.member, true),
+                    'channel': ScriptObjects.messageChannel(context.channel, true),
+                    'context': ScriptArgument.make()
+                            .addVoidMethod('reply', 1) {
+                                context.reply(ScriptObjects.message(it, 0))
+                            }
+                            .addVoidMethod('replyEmbed', 1) {
+                                context.replyEmbed(ScriptObjects.embed(it, 0))
+                            }
+                            .addVoidMethod('replyEmbeds', -1) {
+                                context.replyEmbeds(it.stream(i -> ScriptObjects.embed(it, i))
+                                        .filter { it !== null }.limit(3).toList())
+                            }
+            ], script)
+        } catch (Exception e) {
+            context.reply(MessageCreateData.fromContent("There was an exception evaluating the script: $e"))
+        }
     }
 }
 

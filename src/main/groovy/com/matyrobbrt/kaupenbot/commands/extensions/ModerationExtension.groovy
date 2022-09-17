@@ -1,7 +1,8 @@
-package com.matyrobbrt.kaupenbot.commands.moderation
+package com.matyrobbrt.kaupenbot.commands.extensions
 
-import com.matyrobbrt.kaupenbot.commands.api.CommandExtension
+import com.matyrobbrt.kaupenbot.commands.api.BotExtension
 import com.matyrobbrt.kaupenbot.commands.api.CommandManager
+import com.matyrobbrt.kaupenbot.commands.api.RegisterExtension
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
@@ -12,11 +13,11 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
 @CompileStatic
-final class ModerationExtension implements CommandExtension {
+@RegisterExtension
+final class ModerationExtension implements BotExtension {
     @Override
     void fillCommands(CommandManager manager) {
         manager.addCommand {

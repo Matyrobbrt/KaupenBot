@@ -17,11 +17,11 @@ import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
-import com.matyrobbrt.kaupenbot.commands.SuggestionExtensions
+import com.matyrobbrt.kaupenbot.commands.api.BotExtension
 import com.matyrobbrt.kaupenbot.commands.api.CommandManagerImpl
+import com.matyrobbrt.kaupenbot.commands.api.RegisterExtension
 import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
-import com.matyrobbrt.kaupenbot.commands.moderation.ModerationExtension
 import com.matyrobbrt.kaupenbot.commands.moderation.WarnCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.WarningCommand
 import com.matyrobbrt.kaupenbot.db.WarningMapper
@@ -53,6 +53,9 @@ import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.jdbi.v3.core.Jdbi
 import org.jetbrains.annotations.NotNull
+import org.reflections.Reflections
+import org.reflections.scanners.Scanners
+import org.reflections.util.ConfigurationBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
@@ -151,7 +154,14 @@ final class KaupenBot {
         final localization = ResourceBundleLocalizationFunction.fromBundles(bundleName, locales.toArray(DiscordLocale[]::new)).build()
         final commands = new CommandManagerImpl(localization)
 
-        final extensions = [new ModerationExtension(), new SuggestionExtensions()]
+        final extensions = new ArrayList<BotExtension>()
+        new Reflections(new ConfigurationBuilder()
+                .forPackage('com.matyrobbrt.kaupenbot.commands.extensions')
+                .setScanners(Scanners.TypesAnnotated))
+            .getTypesAnnotatedWith(RegisterExtension)
+            .forEach {
+                extensions.add(it.getConstructor().newInstance() as BotExtension)
+            }
         extensions.each {
             it.fillCommands(commands)
         }
@@ -240,6 +250,7 @@ final class BotConstants {
 @ConfigSerializable
 class Config {
     long moderatorRole
+    long joinRole
     String[] prefixes = new String[] { '!', '-' }
     LoggingChannels loggingChannels = new LoggingChannels()
     Channels channels = new Channels()

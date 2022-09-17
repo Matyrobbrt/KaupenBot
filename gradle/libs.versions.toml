@@ -17,6 +17,7 @@ dotenv = "2.2.4"
 webhooks = "0.8.2"
 groovy = "4.0.4"
 configurate = "4.1.2"
+reflections = "0.10.2"
 
 [libraries]
 jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
@@ -30,6 +31,7 @@ jdbi-sqlobject = { module = "org.jdbi:jdbi3-sqlobject", version.ref = "jdbi" }
 dotenv = {module = "io.github.cdimascio:dotenv-java", version.ref = "dotenv"}
 webhooks = {module = "club.minnced:discord-webhooks", version.ref = "webhooks"}
 configurate-hocon = {module = "org.spongepowered:configurate-hocon", version.ref = "configurate"}
+reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
 
 groovy = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
 groovy-nio = { module = "org.apache.groovy:groovy-nio", version.ref = "groovy" }

@@ -1,5 +1,6 @@
 package com.matyrobbrt.kaupenbot.commands.extensions
 
+import com.jagrosh.jdautilities.command.CommandClient
 import com.matyrobbrt.kaupenbot.commands.api.BotExtension
 import com.matyrobbrt.kaupenbot.commands.api.CommandManager
 import com.matyrobbrt.kaupenbot.commands.api.RegisterExtension
@@ -19,7 +20,7 @@ import java.util.function.Function
 @RegisterExtension
 final class ModerationExtension implements BotExtension {
     @Override
-    void fillCommands(CommandManager manager) {
+    void fillCommands(CommandManager manager, CommandClient client) {
         manager.addCommand {
             name = 'softban'
             description = 'Bans and unbans a member, deleting their messages.'

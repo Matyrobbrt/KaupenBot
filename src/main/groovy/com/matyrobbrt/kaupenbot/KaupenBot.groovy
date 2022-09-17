@@ -163,7 +163,7 @@ final class KaupenBot {
                 extensions.add(it.getConstructor().newInstance() as BotExtension)
             }
         extensions.each {
-            it.fillCommands(commands)
+            it.fillCommands(commands, client)
         }
 
         jda = JDABuilder.createLight(token)

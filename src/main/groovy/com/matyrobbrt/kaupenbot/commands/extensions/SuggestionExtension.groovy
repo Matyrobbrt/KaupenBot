@@ -1,5 +1,6 @@
 package com.matyrobbrt.kaupenbot.commands.extensions
 
+import com.jagrosh.jdautilities.command.CommandClient
 import com.matyrobbrt.kaupenbot.KaupenBot
 import com.matyrobbrt.kaupenbot.commands.api.BotExtension
 import com.matyrobbrt.kaupenbot.commands.api.CommandManager
@@ -37,7 +38,7 @@ final class SuggestionExtension implements BotExtension {
     private static final String DENY_ID = 'deny'
 
     @Override
-    void fillCommands(CommandManager manager) {
+    void fillCommands(CommandManager manager, CommandClient client) {
         manager.addCommand {
             name = 'suggest'
             guildOnly = true

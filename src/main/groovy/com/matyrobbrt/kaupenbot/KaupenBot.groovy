@@ -44,6 +44,7 @@ import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.localization.ResourceBundleLocalizationFunction
 import net.dv8tion.jda.api.requests.GatewayIntent
@@ -81,6 +82,7 @@ final class KaupenBot {
     static Config config
     static JDA jda
     static CommandClient client
+    static final Map<DiscordLocale, ResourceBundle> BUNDLES = new HashMap<>()
 
     static void start(Dotenv env) throws IOException {
         final token = env.get('BOT_TOKEN')
@@ -139,9 +141,12 @@ final class KaupenBot {
             otherListeners.add(new AutoGistDetection(gistToken))
         }
 
-        final localization = ResourceBundleLocalizationFunction.fromBundles(
-                'localization/commands'
-        ).build()
+        final bundleName = 'localization/commands'
+        final locales = [] as List<DiscordLocale>
+        locales.each {
+            BUNDLES[it] = ResourceBundle.getBundle(bundleName, Locale.forLanguageTag(it.locale))
+        }
+        final localization = ResourceBundleLocalizationFunction.fromBundles(bundleName, locales.toArray(DiscordLocale[]::new)).build()
         final commands = new CommandManagerImpl(localization)
         [new ModerationExtension()].each {
             it.fillCommands(commands)

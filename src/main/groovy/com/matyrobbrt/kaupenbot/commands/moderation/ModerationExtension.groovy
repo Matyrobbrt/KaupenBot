@@ -41,6 +41,7 @@ final class ModerationExtension implements CommandExtension {
             }
         }
 
+        /* TODO make this work
         manager.addCommand {
             name = 'purge'
             description = 'Purge messages from a channel.'
@@ -75,7 +76,7 @@ final class ModerationExtension implements CommandExtension {
                                     .queue())
                 })
             }
-        }
+        } */
     }
 
     static CompletableFuture<List<Message>> getMessages(MessageChannel channel, int amount) {

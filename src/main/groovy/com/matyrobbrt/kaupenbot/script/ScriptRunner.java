@@ -35,6 +35,7 @@ public class ScriptRunner {
         {
             final var imports = new ImportCustomizer();
             imports.addStarImports("net.dv8tion.jda.api");
+            imports.addImports("com.matyrobbrt.kaupenbot.script.ScriptUtils");
             configuration.addCompilationCustomizers(imports);
         }
 

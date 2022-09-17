@@ -7,6 +7,7 @@ import groovy.lang.MissingMethodException;
 import groovy.lang.MissingPropertyException;
 import groovy.lang.Tuple;
 import net.dv8tion.jda.api.requests.RestAction;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.StringGroovyMethods;
 import org.jdbi.v3.core.internal.MemoizingSupplier;
 import org.jetbrains.annotations.NotNull;
@@ -142,6 +143,18 @@ public class ScriptArgument extends GroovyObjectSupport implements GroovyInterce
     private ScriptArgument() {}
     public static ScriptArgument make() {
         return new ScriptArgument();
+    }
+
+    public Object getChildrenProperty(String path) {
+        final var props = path.split("\\.");
+        ScriptArgument current = (ScriptArgument) getProperty(props[0]);
+        for (final var prop : DefaultGroovyMethods.dropRight(DefaultGroovyMethods.drop(props, 1), 1)) {
+            if (current == null) {
+                return null;
+            }
+            current = (ScriptArgument) getProperty(prop);
+        }
+        return current == null ? null : current.getProperty(props[props.length - 1]);
     }
 
     public ScriptArgument addProperty(String name, Object value) {

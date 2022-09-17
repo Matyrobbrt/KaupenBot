@@ -81,6 +81,7 @@ public class ScriptObjects {
             .set("isBot", user.isBot())
             .set("hasPrivateChannel", user.hasPrivateChannel())
             .addMethod("getAsTag", user::getAsTag)
+            .addMethod("getAvatarUrl", user::getEffectiveAvatarUrl)
             .addMethod("openPrivateChannel", 0, args -> {
                 final var privateChannel = user.openPrivateChannel().complete();
                 return privateChannel == null ? null : messageChannel(privateChannel, canDm);
@@ -95,6 +96,7 @@ public class ScriptObjects {
             .set("timeBoosted", member.getTimeBoosted())
             .set("joinTime", member.getTimeJoined())
             .addMethod("getStatus", member::getOnlineStatus)
+            .addMethod("getAvatarUrl", member::getEffectiveAvatarUrl)
             .addCachedProperty("roles", () -> member.getRoles().stream().map(ScriptObjects::role).toList());
     }
 

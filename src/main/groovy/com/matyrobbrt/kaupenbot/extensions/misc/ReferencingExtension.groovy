@@ -22,7 +22,7 @@ import java.awt.*
 final class ReferencingExtension implements BotExtension {
     @Override
     void subscribeEvents(JDA jda) {
-        jda.subscribe(MessageReceivedEvent) {
+        jda.subscribe(MessageReceivedEvent) { event ->
             if (!fromGuild) return
             final var originalMsg = getMessage()
             if (originalMsg.getMessageReference() != null && isStringReference(originalMsg.getContentRaw())) {
@@ -41,7 +41,7 @@ final class ReferencingExtension implements BotExtension {
             }
 
             getJDA().getMessageByLink(msg[0])?.queue(message -> {
-                channel.sendMessageEmbeds(reference(message, getMember()))
+                event.getChannel().sendMessageEmbeds(reference(message, event.getMember()))
                     .flatMap({ msg.length === 1 && originalMsg.messageReference === null })
                             { originalMsg.delete().reason('Message was a reference') }
                     .queue()

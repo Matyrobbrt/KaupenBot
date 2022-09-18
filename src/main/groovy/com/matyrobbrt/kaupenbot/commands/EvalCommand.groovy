@@ -40,8 +40,10 @@ class EvalCommand extends SlashCommand {
     EvalCommand() {
         name = 'evaluate'
         help = 'Evaluate a script.'
+        guildOnly = true
         aliases = new String[]{'eval'}
         options.add(new OptionData(OptionType.STRING, 'script', 'The script to evaluate'))
+        options.add(new OptionData(OptionType.BOOLEAN, 'ephemeral', 'If the reply should be ephemeral.'))
         userPermissions = new Permission[] {
             Permission.MODERATE_MEMBERS
         }
@@ -51,7 +53,8 @@ class EvalCommand extends SlashCommand {
     protected void execute(final SlashCommandEvent event) {
         final var scriptOption = event.getOption("script")
         if (scriptOption != null) {
-            event.deferReply().setAllowedMentions(ScriptObjects.ALLOWED_MENTIONS)
+            final ephemeral = event.getOption('ephemeral')?.asBoolean && event.member.hasPermission(Permission.MANAGE_CHANNEL)
+            event.deferReply(ephemeral).setAllowedMentions(ScriptObjects.ALLOWED_MENTIONS)
                     .queue(hook -> {
                         final var context = createInteractionContext(hook)
 
@@ -100,7 +103,7 @@ class EvalCommand extends SlashCommand {
                             hook.editOriginal("There was an exception evaluating script: "
                                     + exception.getLocalizedMessage())
                                     .setActionRow(DismissListener.createDismissButton(event))
-                                    .queue();
+                                    .queue()
                         }
                     });
                     Constants.EXECUTOR.schedule(() -> {

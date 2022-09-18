@@ -15,14 +15,11 @@ import com.matyrobbrt.kaupenbot.apiimpl.BasePluginRegistry
 import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
-import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.command.CommandManagerImpl
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionFinder
 import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
-import com.matyrobbrt.kaupenbot.commands.moderation.WarnCommand
-import com.matyrobbrt.kaupenbot.commands.moderation.WarningCommand
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.quote.QuoteCommand
@@ -115,8 +112,7 @@ final class KaupenBot {
             activity = null
             manualUpsert = true
 
-            addSlashCommands(WarningCommand(), QuoteCommand())
-            addCommand(WarnCommand())
+            addSlashCommands(QuoteCommand())
             EvalCommand().tap {
                 addSlashCommand(it)
                 addCommand(it)
@@ -225,8 +221,6 @@ final class BotConstants {
     }
 
     static void registerPlugins(PluginRegistry registry) {
-        registry.registerPlugin('warnings', new WarningPluginImpl())
-
         final events = new EventsPluginImpl()
         KaupenBot.jda.addEventListener(events)
         registry.registerPlugin('events', events)

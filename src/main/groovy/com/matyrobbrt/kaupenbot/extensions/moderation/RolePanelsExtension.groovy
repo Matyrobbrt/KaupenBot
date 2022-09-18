@@ -31,7 +31,7 @@ import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import java.awt.Color
 
 @CompileStatic
-@RegisterExtension(botId = 'kbot')
+@RegisterExtension(botId = 'kbot', value = 'role-panels')
 final class RolePanelsExtension implements BotExtension {
 
     private final Map<Long, SelfRoleData> data = Collections.synchronizedMap([:])

@@ -11,6 +11,7 @@ import com.matyrobbrt.jdahelper.pagination.PaginatorBuilder
 import com.matyrobbrt.kaupenbot.common.command.CommandManagerImpl
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionFinder
+import com.matyrobbrt.kaupenbot.common.extension.ExtensionManager
 import com.matyrobbrt.kaupenbot.common.util.ConfigurateUtils
 import com.matyrobbrt.kaupenbot.common.util.Constants
 import com.matyrobbrt.kaupenbot.common.util.DeferredComponentListeners
@@ -90,8 +91,9 @@ final class ModMail {
 
         final commands = new CommandManagerImpl(ResourceBundleLocalizationFunction.empty().build())
 
-        final extensions = findExtensions([:])
-        extensions.each {
+        final extensions = new ExtensionManager(null)
+        findExtensions(extensions, [:])
+        extensions.forEachEnabled {
             it.registerCommands(commands, client)
         }
 
@@ -117,13 +119,17 @@ final class ModMail {
             .setStatus(OnlineStatus.IDLE)
             .build()
 
+        extensions.forEachEnabled {
+            it.subscribeEvents(jda)
+        }
+
         Constants.EXECUTOR.scheduleAtFixedRate({
             components.removeComponentsOlderThan(30, ChronoUnit.MINUTES)
         }, 0, 30, TimeUnit.MINUTES)
     }
 
     @ExtensionFinder('modmail')
-    private static List<BotExtension> findExtensions(Map args) {
+    private static void findExtensions(ExtensionManager extensions, Map args) {
         throw new UnsupportedOperationException()
     }
 

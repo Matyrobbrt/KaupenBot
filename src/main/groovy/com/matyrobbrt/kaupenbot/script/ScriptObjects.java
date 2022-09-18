@@ -135,6 +135,10 @@ public class ScriptObjects {
     }
 
     public static ScriptArgument guild(Guild guild) {
+        return guild(guild, false);
+    }
+
+    public static ScriptArgument guild(Guild guild, boolean canSend) {
         final var context = snowflake(guild);
         context.set("name", guild.getName());
         context.set("icon", guild.getIconUrl());
@@ -148,7 +152,7 @@ public class ScriptObjects {
                 member(guild.retrieveMemberById(args.string(0)).complete(), false));
         context.addMethod("getTextChannelById", 1, args -> {
             final var channel = guild.getTextChannelById(args.string(0));
-            return channel == null ? null : textChannel(channel, false);
+            return channel == null ? null : textChannel(channel, canSend);
         });
         context.addCachedProperty("roles", () -> guild.getRoles().stream().map(ScriptObjects::role).toList());
         context.addCachedProperty("channels", () -> guild.getChannels().stream().map(ScriptObjects::channel).toList());

@@ -25,7 +25,7 @@ import java.awt.*
 import java.util.function.Function
 
 @CompileStatic
-@RegisterExtension(botId = 'modmail')
+@RegisterExtension(botId = 'modmail', value = 'listener')
 final class ModMailListener implements BotExtension {
     public static final WebhookManager WEBHOOKS = WebhookManager.of('ModLogs')
     static final Emoji SUCCESS_EMOJI = Emoji.fromUnicode('U+2705')

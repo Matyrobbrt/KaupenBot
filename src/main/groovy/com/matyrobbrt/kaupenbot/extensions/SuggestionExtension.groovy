@@ -27,7 +27,7 @@ import net.dv8tion.jda.api.requests.RestAction
 import java.awt.*
 
 @CompileStatic
-@RegisterExtension(botId = 'kbot')
+@RegisterExtension(botId = 'kbot', value = 'suggestions')
 final class SuggestionExtension implements BotExtension {
     private static final Emoji UPVOTE = Emoji.fromUnicode('⬆')
     private static final Emoji DOWN_VOTE = Emoji.fromUnicode('⬇')

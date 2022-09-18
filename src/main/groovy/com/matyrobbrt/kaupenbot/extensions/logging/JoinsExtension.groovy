@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.utils.TimeFormat
 import java.awt.Color
 
 @CompileStatic
-@RegisterExtension(botId = 'kbot')
+@RegisterExtension(botId = 'kbot', value = 'joins')
 final class JoinsExtension implements BotExtension {
     @Override
     void subscribeEvents(JDA jda) {

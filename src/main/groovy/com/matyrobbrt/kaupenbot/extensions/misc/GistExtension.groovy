@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 
 @CompileStatic
-@RegisterExtension(botId = 'kbot')
+@RegisterExtension(botId = 'kbot', value = 'gist')
 final class GistExtension implements BotExtension {
     private static final List<String> ACCEPTED_EXTENSIONS = List.of(
             'txt', 'gradle', 'log', 'java', 'txt',

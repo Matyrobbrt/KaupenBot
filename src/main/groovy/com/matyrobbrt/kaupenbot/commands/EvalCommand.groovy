@@ -134,7 +134,7 @@ class EvalCommand extends SlashCommand {
         }
         final String finalScript = script
         final context = [
-                'guild': ScriptObjects.guild(event.guild),
+                'guild': ScriptObjects.guild(event.guild, event.member.hasPermission(Permission.MANAGE_CHANNEL)),
                 'member': event.member === null ? null : ScriptObjects.member(event.member, true),
                 'user': ScriptObjects.user(event.message.author, true),
                 'message': ScriptObjects.message(event.message, true),
@@ -161,7 +161,7 @@ class EvalCommand extends SlashCommand {
     static Map<String, ScriptArgument> createInteractionContext(final InteractionHook hook) {
         final inter = hook.interaction
         return [
-                'guild' : ScriptObjects.guild(inter.guild),
+                'guild' : ScriptObjects.guild(inter.guild, inter.member.hasPermission(Permission.MANAGE_CHANNEL)),
                 'channel': ScriptObjects.messageChannel(inter.messageChannel, true),
                 'member': inter.member === null ? null : ScriptObjects.member(inter.member, true),
                 'user'  : ScriptObjects.user(inter.user, true),

@@ -11,7 +11,7 @@ import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
 import groovy.transform.CompileStatic
 
 @CompileStatic
-@RegisterExtension(botId = 'kbot')
+@RegisterExtension(botId = 'kbot', value = 'warnings')
 final class WarningsExtension implements BotExtension {
     @Override
     void registerCommands(CommandManager manager, CommandClient client) {

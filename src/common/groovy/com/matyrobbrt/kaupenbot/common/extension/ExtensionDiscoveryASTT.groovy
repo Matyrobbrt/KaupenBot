@@ -23,7 +23,7 @@ final class ExtensionDiscoveryASTT extends AbstractASTTransformation implements 
         final bid = getMemberStringValue(ann, 'botId')
         final object = nodes[1] as ClassNode
         final ctor = object.declaredConstructors.find() ?: object.addConstructor(Opcodes.ACC_PUBLIC, Parameter.EMPTY_ARRAY, ClassNode.EMPTY_ARRAY, GeneralUtils.block())
-        extensions.computeIfAbsent(bid) { new ArrayList<>() }.add(new Ctor(ctor, object))
+        extensions.computeIfAbsent(bid) { new ArrayList<>() }.add(new Ctor(ctor, object, getMemberStringValue(ann, 'value')))
     }
 
     @Override
@@ -32,5 +32,5 @@ final class ExtensionDiscoveryASTT extends AbstractASTTransformation implements 
     }
 
     @ImmutableOptions(knownImmutableClasses = [ConstructorNode, ClassNode])
-    static record Ctor(ConstructorNode ctor, ClassNode type) {}
+    static record Ctor(ConstructorNode ctor, ClassNode type, String name) {}
 }

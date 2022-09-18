@@ -8,6 +8,9 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.hooks.EventListener;
 
+import java.util.Collection;
+import java.util.function.Predicate;
+
 public class JavaExtensions {
 
     @SuppressWarnings("rawtypes")
@@ -25,4 +28,7 @@ public class JavaExtensions {
         });
     }
 
+    public static <T> Predicate<T> notIn(Collection<T> self) {
+        return obj -> !self.contains(obj);
+    }
 }

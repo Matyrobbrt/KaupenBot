@@ -16,10 +16,10 @@ import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
-import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.command.CommandManagerImpl
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionFinder
 import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
+import com.matyrobbrt.kaupenbot.common.extension.ExtensionManager
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.quote.QuoteCommand
@@ -136,10 +136,11 @@ final class KaupenBot {
         final localization = ResourceBundleLocalizationFunction.fromBundles(bundleName, locales.toArray(DiscordLocale[]::new)).build()
         final commands = new CommandManagerImpl(localization)
 
-        final extensions = findExtensions([
+        final extensions = new ExtensionManager(config.disabledExtensions.notIn())
+        findExtensions(extensions, [
                 'env' : env
         ])
-        extensions.each {
+        extensions.forEachEnabled {
             it.registerCommands(commands, client)
         }
 
@@ -167,7 +168,7 @@ final class KaupenBot {
                 })
                 .addEventListeners(new EvalCommand.ModalListener())
                 .build()
-        extensions.each { it.subscribeEvents(jda) }
+        extensions.forEachEnabled { it.subscribeEvents(jda) }
 
         BotConstants.registerMappers(database)
         Constants.EXECUTOR.scheduleAtFixedRate({
@@ -177,8 +178,9 @@ final class KaupenBot {
         BotConstants.preparePlugins(extensions)
     }
 
+    @CompileStatic
     @ExtensionFinder('kbot')
-    private static List<BotExtension> findExtensions(Map args) {
+    private static void findExtensions(ExtensionManager extensions, Map args) {
         throw new UnsupportedOperationException()
     }
 }
@@ -198,11 +200,13 @@ final class BotConstants {
         jdbi.registerRowMapper(Warning, WarningMapper())
     }
 
-    static void preparePlugins(List<BotExtension> extensions) {
+    static void preparePlugins(ExtensionManager extensions) {
         KaupenBot.plugins = new BasePluginRegistry()
         registerPlugins(KaupenBot.plugins)
 
-        for (final ext : extensions) ext.registerPlugins(KaupenBot.plugins)
+        extensions.forEachEnabled {
+            it.registerPlugins(KaupenBot.plugins)
+        }
 
         final scriptsDir = Path.of('scripts')
         final out = scriptsDir.resolve('.out').toAbsolutePath()
@@ -236,6 +240,7 @@ class Config {
     String[] prefixes = new String[] { '!', '-' }
     LoggingChannels loggingChannels = new LoggingChannels()
     Channels channels = new Channels()
+    List<String> disabledExtensions = []
 
     @CompileStatic
     @ConfigSerializable

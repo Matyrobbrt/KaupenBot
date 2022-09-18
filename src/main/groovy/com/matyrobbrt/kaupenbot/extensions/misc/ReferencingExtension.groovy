@@ -18,7 +18,7 @@ import javax.annotation.Nonnull
 import java.awt.*
 
 @CompileStatic
-@RegisterExtension(botId = 'kbot')
+@RegisterExtension(botId = 'kbot', value = 'referencing')
 final class ReferencingExtension implements BotExtension {
     @Override
     void subscribeEvents(JDA jda) {

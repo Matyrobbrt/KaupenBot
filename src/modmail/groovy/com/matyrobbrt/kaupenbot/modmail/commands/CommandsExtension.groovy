@@ -21,7 +21,7 @@ import java.awt.*
 import java.util.List
 
 @CompileStatic
-@RegisterExtension(botId = 'modmail')
+@RegisterExtension(botId = 'modmail', value = 'commands')
 final class CommandsExtension implements BotExtension {
     @Override
     void registerCommands(CommandManager manager, CommandClient client) {

@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
 @CompileStatic
-@RegisterExtension(botId = 'kbot')
+@RegisterExtension(botId = 'kbot', value = 'moderation')
 final class ModerationExtension implements BotExtension {
     @Override
     void registerCommands(CommandManager manager, CommandClient client) {

@@ -23,7 +23,7 @@ abstract class PaginatedSlashCommand extends SlashCommand {
     }
 
     protected int getItemsPerPage() {
-        return paginator.getItemsPerPage();
+        return paginator.getItemsPerPage()
     }
 
     /**

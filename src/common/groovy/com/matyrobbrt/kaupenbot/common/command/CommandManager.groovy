@@ -24,6 +24,13 @@ interface CommandManager {
         closure()
         addCommand(builder)
     }
+    default void addPaginatedCommand(@DelegatesTo(value = PaginatedCommandBuilder, strategy = Closure.DELEGATE_FIRST) Closure closure) {
+        final builder = new PaginatedCommandBuilder()
+        closure.delegate = builder
+        closure.resolveStrategy = Closure.DELEGATE_FIRST
+        closure()
+        addCommand(builder)
+    }
 }
 
 @CompileStatic

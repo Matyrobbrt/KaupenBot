@@ -1,6 +1,7 @@
 package com.matyrobbrt.kaupenbot.modmail.commands
 
 import com.jagrosh.jdautilities.command.CommandClient
+import com.matyrobbrt.jdahelper.pagination.Paginator
 import com.matyrobbrt.kaupenbot.common.command.CommandManager
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
@@ -12,8 +13,10 @@ import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.ThreadChannel
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.utils.TimeFormat
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
 
@@ -25,8 +28,6 @@ import java.util.List
 final class CommandsExtension implements BotExtension {
     @Override
     void registerCommands(CommandManager manager, CommandClient client) {
-        client.addSlashCommand(new TicketsCommand())
-
         [new AReplyCommand(), new ReplyCommand(),
          new CloseCommand(), new ACloseCommand(),
         ].each {
@@ -153,6 +154,50 @@ final class CommandsExtension implements BotExtension {
                         hook.editOriginal("Successfully created ticket: <$msg.channelId>").queue()
                     }
                 }.exceptionHandling()
+            }
+        }
+
+        manager.addPaginatedCommand {
+            name = 'tickets'
+            guildOnly = true
+            description = 'List all tickets a user has had.'
+            require(Permission.MODERATE_MEMBERS)
+
+            options = [
+                    new OptionData(OptionType.USER, 'user', 'The user whose tickets to list.', true)
+            ]
+            checkIf({ it.getOption('user')?.asUser !== null }, 'Unknown user!')
+
+            action {
+                final userOpt = getOption('user').asUser
+                final tickets = ModMail.database.withExtension(TicketsDAO) { it.getThreads(userOpt.idLong) }
+                createPaginatedMessage(it, tickets.size(), userOpt.id).queue()
+            }
+
+            setPaginator(ModMail.paginator('tickets-cmd')
+                    .buttonsOwnerOnly(true)
+                    .buttonOrder(Paginator.DEFAULT_BUTTON_ORDER)
+                    .itemsPerPage(10), true)
+
+            embedFactory { start, max, args ->
+                final userId = args[0] as long
+                final tickets = ModMail.database.withExtension(TicketsDAO) { it.getThreads(userId) }
+                final threads = ModMail.guild.getTextChannelById(ModMail.config.loggingChannel).retrieveArchivedPublicThreadChannels().submit().get()
+                return new EmbedBuilder().tap {
+                    sentNow()
+                    color = Color.RED
+                    description = "<@${userId}>'s tickets:\n"
+                    for (final ticket : tickets.drop(start).take(paginator.itemsPerPage)) {
+                        ThreadChannel thread = ModMail.guild.getThreadChannelById(ticket)
+                        if (thread === null)
+                            thread = threads.find { id -> id.idLong == ticket }
+                        if (thread != null) {
+                            appendDescription("$thread.asMention - ${TimeFormat.DATE_TIME_SHORT.format(thread.timeCreated)}. Open: ${!thread.archived}\n")
+                        }
+                    }
+                    description = descriptionBuilder.toString().trim()
+                    footer = "Page ${getPageNumber(start)} / ${getPagesNumber(max)}"
+                }
             }
         }
     }

@@ -19,7 +19,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 
 @CompileStatic
-final class CommandBuilder {
+sealed class CommandBuilder permits PaginatedCommandBuilder {
     String name
     String description
     boolean guildOnly

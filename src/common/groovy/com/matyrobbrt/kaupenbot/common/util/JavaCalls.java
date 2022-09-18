@@ -2,6 +2,7 @@ package com.matyrobbrt.kaupenbot.common.util;
 
 import com.matyrobbrt.jdahelper.components.context.ButtonInteractionContext;
 import com.matyrobbrt.jdahelper.pagination.PaginatorImpl;
+import com.matyrobbrt.kaupenbot.common.command.PaginatedCommandBuilder;
 import com.matyrobbrt.kaupenbot.common.command.PaginatedSlashCommand;
 import com.matyrobbrt.kaupenbot.extensions.Extensions;
 import groovy.lang.Closure;
@@ -24,6 +25,12 @@ public class JavaCalls {
         return ctx -> {
             ctx.getEvent().deferEdit().queue();
             ((PaginatorImpl) command.paginator).onButtonInteraction(ctx);
+        };
+    }
+    public static Consumer<ButtonInteractionContext> deferringHandler(PaginatedCommandBuilder command) {
+        return ctx -> {
+            ctx.getEvent().deferEdit().queue();
+            ((PaginatorImpl) command.getPaginator()).onButtonInteraction(ctx);
         };
     }
 

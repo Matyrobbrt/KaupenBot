@@ -12,7 +12,7 @@ import com.matyrobbrt.kaupenbot.KaupenBot
 import com.matyrobbrt.kaupenbot.script.ScriptArgument
 import com.matyrobbrt.kaupenbot.script.ScriptObjects
 import com.matyrobbrt.kaupenbot.script.ScriptRunner
-import com.matyrobbrt.kaupenbot.util.PaginatedSlashCommand
+import com.matyrobbrt.kaupenbot.common.command.PaginatedSlashCommand
 import groovy.transform.CompileStatic
 import groovy.transform.ImmutableOptions
 import groovy.transform.TupleConstructor

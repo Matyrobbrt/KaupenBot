@@ -4,7 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.matyrobbrt.kaupenbot.KaupenBot
-import com.matyrobbrt.kaupenbot.util.JavaCalls
+import com.matyrobbrt.kaupenbot.common.util.JavaCalls
 import com.matyrobbrt.kaupenbot.util.gson.InstantTypeAdapter
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode

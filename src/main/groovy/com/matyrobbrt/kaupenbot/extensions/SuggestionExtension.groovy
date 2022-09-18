@@ -2,7 +2,9 @@ package com.matyrobbrt.kaupenbot.extensions
 
 import com.jagrosh.jdautilities.command.CommandClient
 import com.matyrobbrt.kaupenbot.KaupenBot
-import com.matyrobbrt.kaupenbot.commands.api.CommandManager
+import com.matyrobbrt.kaupenbot.common.command.CommandManager
+import com.matyrobbrt.kaupenbot.common.extension.BotExtension
+import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
 import groovy.transform.CompileStatic
 import kotlin.Pair
 import net.dv8tion.jda.api.EmbedBuilder
@@ -25,7 +27,7 @@ import net.dv8tion.jda.api.requests.RestAction
 import java.awt.*
 
 @CompileStatic
-@RegisterExtension
+@RegisterExtension(botId = 'kbot')
 final class SuggestionExtension implements BotExtension {
     private static final Emoji UPVOTE = Emoji.fromUnicode('⬆')
     private static final Emoji DOWN_VOTE = Emoji.fromUnicode('⬇')

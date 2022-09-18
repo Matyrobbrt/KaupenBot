@@ -10,8 +10,13 @@ repositories {
 }
 
 sourceSets {
+    modmail {}
     var ext = create('extension')
     main {
+        compileClasspath += ext.output
+        runtimeClasspath += ext.output
+    }
+    modmail {
         compileClasspath += ext.output
         runtimeClasspath += ext.output
     }
@@ -20,10 +25,32 @@ sourceSets {
         compileClasspath += api.output
         runtimeClasspath += api.output
     }
+    modmail {
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+
+    var common = create('common') {
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+        compileClasspath += ext.output
+        runtimeClasspath += ext.output
+    }
+    modmail {
+        compileClasspath += common.output
+        runtimeClasspath += common.output
+    }
+    main {
+        compileClasspath += common.output
+        runtimeClasspath += common.output
+        runtimeClasspath += modmail.output
+    }
 }
 configurations {
     extensionImplementation.extendsFrom(implementation)
     apiImplementation.extendsFrom(implementation)
+    commonImplementation.extendsFrom(implementation)
+    modmailImplementation.extendsFrom(implementation)
     shade
     shade.extendsFrom(implementation)
 }
@@ -52,7 +79,6 @@ dependencies {
     implementation libs.dotenv
     implementation libs.webhooks
     implementation libs.configurate.hocon
-    implementation libs.reflections
     implementation 'com.google.code.gson:gson:2.9.1'
 
     compileOnly libs.annotations
@@ -60,6 +86,8 @@ dependencies {
     implementation 'com.typesafe:config:1.4.2'
 
     compileClasspath 'net.sf.trove4j:trove4j:3.0.3'
+    commonCompileClasspath 'net.sf.trove4j:trove4j:3.0.3'
+    modmailCompileClasspath 'net.sf.trove4j:trove4j:3.0.3'
     extensionCompileClasspath 'net.sf.trove4j:trove4j:3.0.3'
 }
 
@@ -78,5 +106,7 @@ shadowJar {
     ])
     from sourceSets.api.output
     from sourceSets.extension.output
+    from sourceSets.common.output
+    from sourceSets.modmail.output
     classifier = ''
 }

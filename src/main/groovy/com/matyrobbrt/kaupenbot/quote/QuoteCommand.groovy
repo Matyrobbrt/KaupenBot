@@ -5,7 +5,7 @@ import com.jagrosh.jdautilities.command.SlashCommandEvent
 import com.matyrobbrt.jdahelper.components.Component
 import com.matyrobbrt.jdahelper.pagination.Paginator
 import com.matyrobbrt.kaupenbot.KaupenBot
-import com.matyrobbrt.kaupenbot.util.PaginatedSlashCommand
+import com.matyrobbrt.kaupenbot.common.command.PaginatedSlashCommand
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget

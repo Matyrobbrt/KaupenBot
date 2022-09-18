@@ -1,6 +1,5 @@
 package com.matyrobbrt.kaupenbot
 
-import com.matyrobbrt.kaupenbot.modmail.ModMail
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.github.cdimascio.dotenv.Dotenv
@@ -18,7 +17,9 @@ class Main {
         if (env.get('enableModMail') === null || Boolean.parseBoolean(env.get('enableModMail'))) {
             final path = Path.of('modmail')
             Files.createDirectories(path)
-            ModMail.start(path, env)
+            Class.forName('com.matyrobbrt.kaupenbot.modmail.ModMail')
+                .getMethod('start', Path, Dotenv)
+                .invoke(null, path, env)
         } else {
             log.warn('ModMail is disabled.')
         }

@@ -8,7 +8,7 @@ import com.matyrobbrt.jdahelper.DismissListener
 import com.matyrobbrt.kaupenbot.script.ScriptArgument
 import com.matyrobbrt.kaupenbot.script.ScriptObjects
 import com.matyrobbrt.kaupenbot.script.ScriptRunner
-import com.matyrobbrt.kaupenbot.util.Constants
+import com.matyrobbrt.kaupenbot.common.util.Constants
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent

@@ -17,24 +17,22 @@ import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.WarningPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
-import com.matyrobbrt.kaupenbot.extensions.BotExtension
-import com.matyrobbrt.kaupenbot.commands.api.CommandManagerImpl
-import com.matyrobbrt.kaupenbot.extensions.RegisterExtension
+import com.matyrobbrt.kaupenbot.common.extension.BotExtension
+import com.matyrobbrt.kaupenbot.common.command.CommandManagerImpl
+import com.matyrobbrt.kaupenbot.common.extension.ExtensionFinder
 import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
-import com.matyrobbrt.kaupenbot.commands.context.GistContextMenu
 import com.matyrobbrt.kaupenbot.commands.moderation.WarnCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.WarningCommand
 import com.matyrobbrt.kaupenbot.db.WarningMapper
-import com.matyrobbrt.kaupenbot.listener.AutoGistDetection
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.quote.QuoteCommand
 import com.matyrobbrt.kaupenbot.tricks.AddTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.RunTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.TrickCommand
 import com.matyrobbrt.kaupenbot.tricks.Tricks
-import com.matyrobbrt.kaupenbot.util.ConfigurateUtils
-import com.matyrobbrt.kaupenbot.util.Constants
-import com.matyrobbrt.kaupenbot.util.DeferredComponentListeners
+import com.matyrobbrt.kaupenbot.common.util.ConfigurateUtils
+import com.matyrobbrt.kaupenbot.common.util.Constants
+import com.matyrobbrt.kaupenbot.common.util.DeferredComponentListeners
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
@@ -43,7 +41,6 @@ import io.github.cdimascio.dotenv.Dotenv
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.events.ReadyEvent
-import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
@@ -53,9 +50,6 @@ import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.jdbi.v3.core.Jdbi
 import org.jetbrains.annotations.NotNull
-import org.reflections.Reflections
-import org.reflections.scanners.Scanners
-import org.reflections.util.ConfigurationBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
@@ -138,14 +132,6 @@ final class KaupenBot {
             addContextMenus(new AddQuoteContextMenu())
         }.build()
 
-        final List<EventListener> otherListeners = []
-        otherListeners.add(new EvalCommand.ModalListener())
-        if (env.get('GIST_TOKEN') !== null) {
-            final gistToken = env.get('GIST_TOKEN')
-            client.addContextMenu(new GistContextMenu(gistToken))
-            otherListeners.add(new AutoGistDetection(gistToken))
-        }
-
         final bundleName = 'localization/commands'
         final locales = [] as List<DiscordLocale>
         locales.each {
@@ -154,14 +140,9 @@ final class KaupenBot {
         final localization = ResourceBundleLocalizationFunction.fromBundles(bundleName, locales.toArray(DiscordLocale[]::new)).build()
         final commands = new CommandManagerImpl(localization)
 
-        final extensions = new ArrayList<BotExtension>()
-        new Reflections(new ConfigurationBuilder()
-                .forPackage('com.matyrobbrt.kaupenbot.commands.extensions')
-                .setScanners(Scanners.TypesAnnotated))
-            .getTypesAnnotatedWith(RegisterExtension)
-            .forEach {
-                extensions.add(it.getConstructor().newInstance() as BotExtension)
-            }
+        final extensions = findExtensions([
+                'env' : env
+        ])
         extensions.each {
             it.registerCommands(commands, client)
         }
@@ -174,7 +155,7 @@ final class KaupenBot {
                     void onReady(@NotNull @Nonnull ReadyEvent event) {
                         log.warn('KaupenBot is ready to work. Logged in as: {} ({})', event.getJDA().selfUser.asTag, event.getJDA().selfUser.id)
 
-                        List<CommandData> data = new ArrayList<>();
+                        List<CommandData> data = new ArrayList<>()
 
                         // Build the commands
                         for (SlashCommand command : client.slashCommands) {
@@ -188,7 +169,7 @@ final class KaupenBot {
                         commands.upsert(event.getJDA(), data)
                     }
                 })
-                .addEventListeners(otherListeners.toArray())
+                .addEventListeners(new EvalCommand.ModalListener())
                 .build()
         extensions.each { it.subscribeEvents(jda) }
 
@@ -197,7 +178,12 @@ final class KaupenBot {
             components.removeComponentsOlderThan(30, ChronoUnit.MINUTES)
         }, 0, 30, TimeUnit.MINUTES)
 
-        BotConstants.preparePlugins()
+        BotConstants.preparePlugins(extensions)
+    }
+
+    @ExtensionFinder('kbot')
+    private static List<BotExtension> findExtensions(Map args) {
+        throw new UnsupportedOperationException()
     }
 }
 
@@ -216,9 +202,11 @@ final class BotConstants {
         jdbi.registerRowMapper(Warning, WarningMapper())
     }
 
-    static void preparePlugins() {
+    static void preparePlugins(List<BotExtension> extensions) {
         KaupenBot.plugins = new BasePluginRegistry()
         registerPlugins(KaupenBot.plugins)
+
+        for (final ext : extensions) ext.registerPlugins(KaupenBot.plugins)
 
         final scriptsDir = Path.of('scripts')
         final out = scriptsDir.resolve('.out').toAbsolutePath()

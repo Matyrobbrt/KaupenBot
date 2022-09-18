@@ -1,7 +1,7 @@
 package com.matyrobbrt.kaupenbot.script;
 
 import com.matyrobbrt.kaupenbot.KaupenBot;
-import com.matyrobbrt.kaupenbot.util.Constants;
+import com.matyrobbrt.kaupenbot.common.util.Constants;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;

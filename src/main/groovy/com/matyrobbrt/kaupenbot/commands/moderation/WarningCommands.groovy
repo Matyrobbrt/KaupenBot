@@ -12,7 +12,7 @@ import com.matyrobbrt.kaupenbot.api.util.Warning
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.db.WarningsDAO
 import com.matyrobbrt.kaupenbot.util.CallbackCommand
-import com.matyrobbrt.kaupenbot.util.PaginatedSlashCommand
+import com.matyrobbrt.kaupenbot.common.command.PaginatedSlashCommand
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget

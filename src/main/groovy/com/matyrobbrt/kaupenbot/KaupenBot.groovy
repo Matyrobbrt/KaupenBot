@@ -164,6 +164,10 @@ final class KaupenBot {
                         }
 
                         commands.upsert(event.getJDA(), data)
+
+                        extensions.forEachEnabled {
+                            it.scheduleTasks(Constants.EXECUTOR)
+                        }
                     }
                 })
                 .addEventListeners(new EvalCommand.ModalListener())

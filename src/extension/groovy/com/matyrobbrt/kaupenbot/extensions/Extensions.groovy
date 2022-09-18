@@ -1,6 +1,7 @@
 package com.matyrobbrt.kaupenbot.extensions
 
 import com.jagrosh.jdautilities.command.SlashCommandEvent
+import com.matyrobbrt.kaupenbot.common.util.TimeUtils
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
@@ -10,6 +11,7 @@ import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
 import net.dv8tion.jda.api.interactions.commands.Command
+import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.buttons.Button
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.NotNull
 
 import javax.annotation.Nonnull
 import javax.annotation.Nullable
+import java.time.Duration
 import java.time.Instant
 
 @CompileStatic
@@ -102,6 +105,10 @@ class Extensions {
 
     static <Z extends Enum<Z>> OptionData addEnum(OptionData self, Class<Z> enumType) {
         self.addChoices(Arrays.stream(enumType.enumConstants).map { new Command.Choice(it.toString(), it.name()) }.toList())
+    }
+
+    static Duration getAsDuration(OptionMapping self) {
+        return TimeUtils.getDurationFromInput(self.asString)
     }
 
     @org.jetbrains.annotations.Nullable

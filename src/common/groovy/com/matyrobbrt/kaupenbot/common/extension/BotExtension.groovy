@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable
 
 import java.lang.annotation.ElementType
 import java.lang.annotation.Target
+import java.util.concurrent.ScheduledExecutorService
 import java.util.function.Consumer
 import java.util.function.Predicate
 
@@ -17,6 +18,8 @@ interface BotExtension {
     default void registerCommands(CommandManager manager, CommandClient client) {}
     default void subscribeEvents(JDA jda) {}
     default void registerPlugins(PluginRegistry registry) {}
+
+    default void scheduleTasks(ScheduledExecutorService service) {}
 }
 
 @Target([ElementType.TYPE])

@@ -1,17 +1,26 @@
+//file:noinspection GrMethodMayBeStatic
 package com.matyrobbrt.kaupenbot.extensions.misc
 
 import com.jagrosh.jdautilities.command.CommandClient
+import com.matyrobbrt.kaupenbot.KaupenBot
 import com.matyrobbrt.kaupenbot.common.command.CommandManager
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
+import com.matyrobbrt.kaupenbot.db.PollsDAO
 import com.vdurmont.emoji.EmojiParser
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.MessageReaction
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.exceptions.ErrorHandler
+import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.components.ActionRow
@@ -20,11 +29,18 @@ import net.dv8tion.jda.api.interactions.components.Modal
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
+import net.dv8tion.jda.api.requests.ErrorResponse
 import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.utils.TimeFormat
 import org.apache.commons.collections4.ListUtils
+import org.jetbrains.annotations.Nullable
 
 import java.awt.*
+import java.time.Duration
+import java.time.Instant
 import java.util.List
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 
@@ -34,6 +50,7 @@ final class PollsExtension implements BotExtension {
     private static final List<Emoji> DEFAULT_EMOJIS = Arrays.stream('🇦 🇧 🇨 🇩 🇪'.split(' ')).<Emoji>map { Emoji.fromUnicode(it) }.toList()
     private static final String FINISH_ID = 'finish-poll-builder'
     private static final String ADD_OPTION_ID = 'add-poll-option'
+    private static final Emoji END_EMOJI = Emoji.fromUnicode('🛑')
 
     private final Map<UUID, PollData> pending = [:]
 
@@ -44,6 +61,7 @@ final class PollsExtension implements BotExtension {
             description = 'Start a poll.'
             options = [
                     new OptionData(OptionType.STRING, 'question', 'Poll question', true),
+                    new OptionData(OptionType.STRING, 'duration', 'The duration the poll should last for. Default: forever. Example: 1d2s -> 1 day and 2 seconds'),
                     new OptionData(OptionType.STRING, 'options', 'The emojis to use for the options. Max: 20. Defaults to A -> E', false)
             ]
             action {
@@ -55,9 +73,10 @@ final class PollsExtension implements BotExtension {
                     replyProhibited('Please provide at least 2 options!').queue()
                     return
                 }
+                final duration = getOption('duration')?.asDuration
 
                 final id = UUID.randomUUID()
-                pending[id] = new PollData(string('question'), user.idLong, emojis, [:])
+                pending[id] = new PollData(duration, string('question'), user.idLong, getHook(), emojis, [:])
 
                 AtomicInteger i = new AtomicInteger()
                 final rows = ListUtils.partition(emojis, 5).stream()
@@ -67,10 +86,8 @@ final class PollsExtension implements BotExtension {
                     .collect(Collectors.toCollection { new ArrayList<ActionRow>() })
                 rows.add(ActionRow.of(Button.success(FINISH_ID + '/' + id, '✔ Done')))
 
-                reply('Please use the buttons below to add the options.')
-                    .addComponents(rows)
-                    .flatMap { it.retrieveOriginal() }
-                    .queue((msg) -> pending.get(id).setMessageId(msg.idLong))
+                replyEphemeral('Please use the buttons below to add the options.')
+                    .addComponents(rows).queue()
             }
         }
     }
@@ -91,6 +108,8 @@ final class PollsExtension implements BotExtension {
                     deferEdit().queue()
                     return
                 }
+                data.messageContent = it.message.contentRaw
+                data.rows = it.message.actionRows
 
                 final emojiIndex = data.allEmojis.indexOf(button.emoji)
                 replyModal(Modal.create(ADD_OPTION_ID + '/' + idSplit[1] + '/' + emojiIndex, 'Add option')
@@ -135,13 +154,35 @@ final class PollsExtension implements BotExtension {
                     }
                 }
 
-                channel.retrieveMessageById(data.messageId)
-                    .flatMap { it.editMessageEmbeds(embed.build()).setContent(null).setComponents(List.of()) }
+                if (data.duration !== null) {
+                    embed.appendDescription("\n\nThis poll will end ${TimeFormat.RELATIVE.format(Instant.now() + data.duration)}.")
+                }
+
+                channel.sendMessageEmbeds(embed.build())
                     .flatMap { msg ->
-                         RestAction.allOf(options.stream().map {
-                             msg.addReaction(it.key)
-                         }.toList())
-                    }.queue { pending.remove(pollId) }
+                        RestAction.allOf(options.stream().map {
+                            msg.addReaction(it.key)
+                        }.toList())
+                        .flatMap({ msg.channelType == ChannelType.TEXT }) { _ ->
+                            msg.createThreadChannel("Discussion of ${it.member.effectiveName}’s poll")
+                                .flatMap { th -> th.sendMessage("${it.user.asMention} this thread can be used for discussing your poll! React with ${END_EMOJI.formatted} to the poll message to forcefully end the poll.") }
+                        }.map { msg }
+                    }
+                    .queue { msg ->
+                        pending.remove(pollId)
+                        KaupenBot.database.useExtension(PollsDAO) { db ->
+                            db.add(
+                                    it.channel.idLong,
+                                    msg.idLong,
+                                    it.user.idLong,
+                                    data.duration === null ? null : Instant.now() + data.duration,
+                                    false, data.question,
+                                    PollsDAO.asString(options)
+                            )
+                        }
+                        data.hook.editOriginal('*This message can be dismissed.*').setComponents(List.of())
+                            .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_WEBHOOK))
+                    }
             }
         }
 
@@ -157,26 +198,87 @@ final class PollsExtension implements BotExtension {
             final emoji = data.allEmojis[Integer.parseInt(idSplit[2])]
             final option = it.getValue('option')?.asString
             data.options.put(emoji, option)
-            channel.retrieveMessageById(data.messageId)
-                .flatMap {
-                    final List<ActionRow> rows = []
-                    it.actionRows.each {
-                        final List<ItemComponent> components = []
-                        for (final comp : it) {
-                            if (comp instanceof Button && comp.emoji == emoji) {
-                                components.add(comp.asDisabled())
-                            } else {
-                                components.add(comp)
-                            }
-                        }
-                        rows.add(ActionRow.of(components))
+
+            final action = data.hook.editOriginal(data.messageContent + "\n${emoji.formatted}: ${option}")
+            final List<ActionRow> rows = []
+            data.rows.each {
+                final List<ItemComponent> components = []
+                for (final comp : it) {
+                    if (comp instanceof Button && comp.emoji == emoji) {
+                        components.add(comp.asDisabled())
+                    } else {
+                        components.add(comp)
                     }
-                    it.editMessage(it.contentRaw + "\n${emoji.formatted}: ${option}")
-                        .setComponents(rows)
                 }
-                .flatMap { deferEdit() }
-                .queue()
+                rows.add(ActionRow.of(components))
+            }
+            action.setComponents(rows).flatMap { deferEdit() }.queue()
         }
+
+        jda.subscribe(MessageReactionAddEvent) {
+            if (it.emoji == END_EMOJI) {
+                final owner = KaupenBot.database.withExtension(PollsDAO) { db ->
+                    db.getOwner(it.channel.idLong, it.messageIdLong)
+                }
+                if (owner !== null && it.user.idLong == owner) {
+                    if (!KaupenBot.database.withExtension(PollsDAO) { db ->
+                        db.isFinished(it.channel.idLong, it.messageIdLong)
+                    }) {
+                        endPoll(it.channel.idLong, it.messageIdLong)
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    void scheduleTasks(ScheduledExecutorService service) {
+        service.scheduleAtFixedRate({
+                KaupenBot.database.useExtension(PollsDAO) {
+                    it.getExpiredSuggestions(Instant.now(), false)
+                        .each {
+                            endPoll(it.channelId(), it.messageId())
+                        }
+                }
+        }, 0, 5, TimeUnit.MINUTES)
+    }
+
+    void endPoll(long channelId, long messageId) {
+        final options = PollsDAO.fromString(KaupenBot.database.withExtension(PollsDAO) {
+            it.getOptions(channelId, messageId)
+        }).stream().collect(Collectors.<Map.Entry<Emoji, String>, Emoji, String>toMap({ it.key }, { it.value }))
+        KaupenBot.jda.getChannelById(MessageChannel, channelId)
+            .retrieveMessageById(messageId)
+            .flatMap { msg ->
+                final Map<Emoji, Integer> votes = msg.reactions.stream()
+                    .collect(Collectors.<MessageReaction, Emoji, Integer>toMap({ it.emoji },
+                            { it.self ? it.count - 1 : it.count }))
+                    .sort { a, b -> b.value <=> a.value }
+                final embed = new EmbedBuilder(msg.embeds[0])
+                    .setColor(Color.MAGENTA)
+                embed.setDescription('*Poll has ended!*\n')
+
+                final Iterator<Map.Entry<Emoji, Integer>> iterator = votes.iterator()
+                while (iterator.hasNext()) {
+                    final next = iterator.next()
+                    final desc = options[next.key]
+                    if (desc !== null) {
+                        embed.appendDescription("**${next.value} votes**: ${next.key.formatted}: ${desc}")
+                        if (iterator.hasNext()) {
+                            embed.appendDescription('\n')
+                        }
+                    }
+                }
+
+                KaupenBot.database.useExtension(PollsDAO) {
+                    it.markFinished(channelId, messageId, true)
+                }
+
+                msg.editMessageEmbeds(embed.build())
+                    .flatMap { it.clearReactions() }
+                    .flatMap({ msg.startedThread !== null }) { msg.startedThread.sendMessage('This poll has ended!')
+                        .flatMap { msg.startedThread.manager.setLocked(true).setArchived(true) } }
+            }.queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE))
     }
 
     static List<Emoji> parseEmojis(String str) {
@@ -197,17 +299,24 @@ final class PollsExtension implements BotExtension {
 
     @CompileStatic
     static final class PollData {
-        long messageId
+        @Nullable
+        final Duration duration
         final String question
         final List<Emoji> allEmojis
         final Map<Emoji, String> options
         final long creator
+        final InteractionHook hook
 
-        PollData(String question, long creator, List<Emoji> allEmojis, Map<Emoji, String> options) {
+        List<ActionRow> rows
+        String messageContent
+
+        PollData(Duration duration, String question, long creator, InteractionHook hook, List<Emoji> allEmojis, Map<Emoji, String> options) {
+            this.duration = duration
             this.question = question
             this.creator = creator
             this.options = options
             this.allEmojis = allEmojis
+            this.hook = hook
         }
     }
 }

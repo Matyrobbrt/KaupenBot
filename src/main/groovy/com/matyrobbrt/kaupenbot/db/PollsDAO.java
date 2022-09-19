@@ -36,7 +36,7 @@ public interface PollsDAO extends Transactional<PollsDAO> {
         return list.stream().<Map.Entry<Emoji, String>>map(it -> new AbstractMap.SimpleEntry<>(Emoji.fromFormatted(it.emoji), it.text)).toList();
     }
 
-    @SqlUpdate("insert into polls(channelId, messageId, ownerId, expireOn, finished, title, pollOptions) values (:channel, :message, :owner, :expire, :finished, :title, :options)")
+    @SqlUpdate("insert into polls(channelId, messageId, ownerId, expireOn, finished, title, pollOptions, multipleChoices) values (:channel, :message, :owner, :expire, :finished, :title, :options, :multiOpt)")
     void add(
             @Bind("channel") long channelId,
             @Bind("message") long messageId,
@@ -44,7 +44,8 @@ public interface PollsDAO extends Transactional<PollsDAO> {
             @Nullable @Bind("expire") Instant expireOn,
             @Bind("finished") boolean finished,
             @Bind("title") String title,
-            @Bind("options") String pollOptions
+            @Bind("options") String pollOptions,
+            @Bind("multiOpt") boolean multipleChoices
     );
 
     @SqlUpdate("update polls set finished = :finished where channelId = :channel and messageId = :message")
@@ -70,6 +71,11 @@ public interface PollsDAO extends Transactional<PollsDAO> {
     );
     @SqlQuery("select finished from polls where channelId = :channel and messageId = :message")
     boolean isFinished(
+            @Bind("channel") long channelId,
+            @Bind("message") long messageId
+    );
+    @SqlQuery("select multipleChoices from polls where channelId = :channel and messageId = :message")
+    boolean isMultipleChoices(
             @Bind("channel") long channelId,
             @Bind("message") long messageId
     );

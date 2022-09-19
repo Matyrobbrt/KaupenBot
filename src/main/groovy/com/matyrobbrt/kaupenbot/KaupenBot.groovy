@@ -16,20 +16,21 @@ import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
+import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.common.command.CommandManagerImpl
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionFinder
-import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionManager
+import com.matyrobbrt.kaupenbot.common.util.ConfigurateUtils
+import com.matyrobbrt.kaupenbot.common.util.Constants
+import com.matyrobbrt.kaupenbot.common.util.DeferredComponentListeners
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
+import com.matyrobbrt.kaupenbot.logback.DiscordLogbackAppender
 import com.matyrobbrt.kaupenbot.quote.QuoteCommand
 import com.matyrobbrt.kaupenbot.tricks.AddTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.RunTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.TrickCommand
 import com.matyrobbrt.kaupenbot.tricks.Tricks
-import com.matyrobbrt.kaupenbot.common.util.ConfigurateUtils
-import com.matyrobbrt.kaupenbot.common.util.Constants
-import com.matyrobbrt.kaupenbot.common.util.DeferredComponentListeners
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
@@ -180,6 +181,11 @@ final class KaupenBot {
         }, 0, 30, TimeUnit.MINUTES)
 
         BotConstants.preparePlugins(extensions)
+
+        if (config.loggingWebhookUrl !== null && !config.loggingWebhookUrl.isEmpty()) {
+            DiscordLogbackAppender.setup(config.loggingWebhookUrl)
+            log.warn('Discord logging has been setup!')
+        }
     }
 
     @CompileStatic
@@ -241,10 +247,13 @@ final class BotConstants {
 class Config {
     long moderatorRole
     long joinRole
+
     String[] prefixes = new String[] { '!', '-' }
+    List<String> disabledExtensions = []
+    String loggingWebhookUrl = ''
+
     LoggingChannels loggingChannels = new LoggingChannels()
     Channels channels = new Channels()
-    List<String> disabledExtensions = []
 
     @CompileStatic
     @ConfigSerializable

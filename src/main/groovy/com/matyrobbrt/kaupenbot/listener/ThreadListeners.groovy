@@ -11,15 +11,20 @@ import org.jetbrains.annotations.NotNull
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
-class ThreadListeners extends ListenerAdapter {
+final class ThreadListeners extends ListenerAdapter {
+    private final List<Long> createdThreads = new LinkedList<>()
     @Override
     void onChannelCreate(@NotNull ChannelCreateEvent event) {
         if (event.channel instanceof ThreadChannel) {
+            if (event.channel.idLong in createdThreads) return
+            createdThreads.add(event.channel.idLong)
+
+            final message = 'Oh hey, a new thread 👀! Better get the mods in here.'
             final thread = event.channel.asThreadChannel()
             thread.join()
-                .flatMap { thread.sendMessage('New thread has been created!') }
+                .flatMap { thread.sendMessage(message) }
                 .delay(1, TimeUnit.SECONDS)
-                .flatMap { it.editMessage("<@&${KaupenBot.config.moderatorRole}> you may want to check out this thread!").setAllowedMentions([Message.MentionType.ROLE]) }
+                .flatMap { it.editMessage("$message\nHey, <@&${KaupenBot.config.moderatorRole}>! Squirrel!").setAllowedMentions([Message.MentionType.ROLE]) }
                 .delay(2, TimeUnit.SECONDS)
                 .flatMap { it.delete() }
                 .queue()

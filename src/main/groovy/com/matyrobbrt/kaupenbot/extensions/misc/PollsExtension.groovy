@@ -7,7 +7,7 @@ import com.matyrobbrt.kaupenbot.common.command.CommandManager
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
 import com.matyrobbrt.kaupenbot.db.PollsDAO
-import com.vdurmont.emoji.EmojiParser
+import com.sigpwned.emoji4j.core.GraphemeMatcher
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
@@ -62,7 +62,8 @@ final class PollsExtension implements BotExtension {
             options = [
                     new OptionData(OptionType.STRING, 'question', 'Poll question', true),
                     new OptionData(OptionType.STRING, 'duration', 'The duration the poll should last for. Default: forever. Example: 1d2s -> 1 day and 2 seconds'),
-                    new OptionData(OptionType.STRING, 'options', 'The emojis to use for the options. Max: 20. Defaults to A -> E', false)
+                    new OptionData(OptionType.STRING, 'options', 'The emojis to use for the options. Max: 20. Defaults to A -> E', false),
+                    new OptionData(OptionType.BOOLEAN, 'multiple-choices', 'If multiple options should be allowed by this poll. Defaults to false', false)
             ]
             action {
                 final emojis = getOption('options', DEFAULT_EMOJIS, { parseEmojis(it.asString) })
@@ -76,7 +77,8 @@ final class PollsExtension implements BotExtension {
                 final duration = getOption('duration')?.asDuration
 
                 final id = UUID.randomUUID()
-                pending[id] = new PollData(duration, string('question'), user.idLong, getHook(), emojis, [:])
+                pending[id] = new PollData(getOption('multiple-choices', false, { it.asBoolean }),
+                        duration, string('question'), user.idLong, getHook(), emojis, [:])
 
                 AtomicInteger i = new AtomicInteger()
                 final rows = ListUtils.partition(emojis, 5).stream()
@@ -145,6 +147,11 @@ final class PollsExtension implements BotExtension {
                             data.allEmojis.indexOf(it.key)
                         })
                         .toList()
+
+                if (data.multipleChoices) {
+                    embed.appendDescription('Multiple choices are allowed!\n\n')
+                }
+
                 final Iterator<Map.Entry<Emoji, String>> iterator = options.iterator()
                 while (iterator.hasNext()) {
                     final next = iterator.next()
@@ -177,7 +184,8 @@ final class PollsExtension implements BotExtension {
                                     it.user.idLong,
                                     data.duration === null ? null : Instant.now() + data.duration,
                                     false, data.question,
-                                    PollsDAO.asString(options)
+                                    PollsDAO.asString(options),
+                                    data.multipleChoices
                             )
                         }
                         data.hook.editOriginal('*This message can be dismissed.*').setComponents(List.of())
@@ -216,10 +224,11 @@ final class PollsExtension implements BotExtension {
         }
 
         jda.subscribe(MessageReactionAddEvent) {
+            final owner = KaupenBot.database.withExtension(PollsDAO) { db ->
+                db.getOwner(it.channel.idLong, it.messageIdLong)
+            }
+            if (owner === null) return
             if (it.emoji == END_EMOJI) {
-                final owner = KaupenBot.database.withExtension(PollsDAO) { db ->
-                    db.getOwner(it.channel.idLong, it.messageIdLong)
-                }
                 if (owner !== null && it.user.idLong == owner) {
                     if (!KaupenBot.database.withExtension(PollsDAO) { db ->
                         db.isFinished(it.channel.idLong, it.messageIdLong)
@@ -227,6 +236,21 @@ final class PollsExtension implements BotExtension {
                         endPoll(it.channel.idLong, it.messageIdLong)
                     }
                 }
+            } else if (!KaupenBot.database.withExtension(PollsDAO) { db -> db.isMultipleChoices(it.channel.idLong, it.messageIdLong)}) {
+                RestAction.allOf(it.retrieveMessage()
+                        .flatMap { it.getReactions() }
+                        .flatMap { it})
+                it.retrieveMessage()
+                    .flatMap {
+                        RestAction.allOf(it.reactions.stream().map {
+                            it.retrieveUsers()
+                        }.toList())
+                    }
+                    .queue { users ->
+                        if (users.findAll { us -> it.user in us }.size() > 1) {
+                            it.reaction.removeReaction(it.user).queue()
+                        }
+                    }
             }
         }
     }
@@ -283,13 +307,18 @@ final class PollsExtension implements BotExtension {
 
     static List<Emoji> parseEmojis(String str) {
         final Set<Emoji> emojis = []
+
         final matcher = Message.MentionType.EMOJI.pattern.matcher(str)
         while (matcher.find()) {
             emojis.add(Emoji.fromFormatted(matcher.group()))
         }
-        for (final emoji : EmojiParser.extractEmojis(str)) {
-            emojis.add(Emoji.fromUnicode(emoji))
+
+        final graphemeMatcher = new GraphemeMatcher(str)
+        while (graphemeMatcher.find()) {
+            final match = graphemeMatcher.grapheme()
+            emojis.add(Emoji.fromUnicode(match.toString()))
         }
+
         final list = new ArrayList<Emoji>(emojis)
         list.sort(Comparator.<Emoji>comparingInt {
             str.indexOf(it.formatted)
@@ -299,6 +328,7 @@ final class PollsExtension implements BotExtension {
 
     @CompileStatic
     static final class PollData {
+        final boolean multipleChoices
         @Nullable
         final Duration duration
         final String question
@@ -310,13 +340,14 @@ final class PollsExtension implements BotExtension {
         List<ActionRow> rows
         String messageContent
 
-        PollData(Duration duration, String question, long creator, InteractionHook hook, List<Emoji> allEmojis, Map<Emoji, String> options) {
+        PollData(boolean multipleChoices, Duration duration, String question, long creator, InteractionHook hook, List<Emoji> allEmojis, Map<Emoji, String> options) {
             this.duration = duration
             this.question = question
             this.creator = creator
             this.options = options
             this.allEmojis = allEmojis
             this.hook = hook
+            this.multipleChoices = multipleChoices
         }
     }
 }

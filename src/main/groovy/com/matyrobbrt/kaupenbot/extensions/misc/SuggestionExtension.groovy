@@ -1,4 +1,4 @@
-package com.matyrobbrt.kaupenbot.extensions
+package com.matyrobbrt.kaupenbot.extensions.misc
 
 import com.jagrosh.jdautilities.command.CommandClient
 import com.matyrobbrt.kaupenbot.KaupenBot

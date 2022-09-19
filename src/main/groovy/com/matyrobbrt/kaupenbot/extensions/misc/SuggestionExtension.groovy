@@ -107,8 +107,11 @@ final class SuggestionExtension implements BotExtension {
                     embed.addField('Suggestion Approved', (getValue('reason')?.asString ?: '*No reason given*') + "\nApproved by: $member.asMention ($member.id)", true)
                     embed.color = Color.GREEN
                     it.editMessageEmbeds(embed.build()).setComponents()
-                }.flatMap { it.clearReactions() }
-                .flatMap { modal.hook.editOriginal('Suggestion approved successfully!') }
+                }.flatMap { it.clearReactions().map {_ -> it } }
+                .flatMap { modal.hook.editOriginal('Suggestion approved successfully!').map { _ -> it } }
+                .flatMap({ it.startedThread !== null }) {
+                    it.startedThread.sendMessage('This suggestion has been approved!')
+                }
                 .queue()
         }
         jda.subscribe(ModalInteractionEvent) { modal ->
@@ -122,8 +125,11 @@ final class SuggestionExtension implements BotExtension {
                     embed.addField('Suggestion Denied', (getValue('reason')?.asString ?: '*No reason given*') + "\nDenied by: $member.asMention ($member.id)", true)
                     embed.color = Color.RED
                     it.editMessageEmbeds(embed.build()).setComponents()
-                }.flatMap { it.clearReactions() }
-                .flatMap { modal.hook.editOriginal('Suggestion denied successfully!') }
+                }.flatMap { it.clearReactions().map { _ -> it } }
+                .flatMap { modal.hook.editOriginal('Suggestion denied successfully!').map { _ -> it } }
+                .flatMap({ it.startedThread !== null }) {
+                    it.startedThread.sendMessage('This suggestion has been denied!')
+                }
                 .queue()
         }
 

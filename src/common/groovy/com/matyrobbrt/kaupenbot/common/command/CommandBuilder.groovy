@@ -45,6 +45,25 @@ sealed class CommandBuilder permits PaginatedCommandBuilder {
         checkIf(Predicate.not(predicate), failureMessage)
     }
 
+    void checkHierarchy(String optionName) {
+        checkIf({
+            final user = it.getOption(optionName)?.asMember
+            if (user !== null && it.member !== null) {
+                if (!it.member.canInteract(user)) {
+                    it.replyProhibited('Cannot interact with members ranked the same or higher than you.').queue()
+                    return false
+                } else if (user == it.member) {
+                    it.replyProhibited('Cannot interact with yourself.').queue()
+                    return false
+                } else if (!it.guild.selfMember.canInteract(user) || user.idLong == it.guild.selfMember.idLong) {
+                    it.replyProhibited('Cannot interact with members ranked the same or higher than the bot.').queue()
+                    return false
+                }
+            }
+            return true
+        }, null)
+    }
+
     void action(@DelegatesTo(
             value = SlashCommandInteractionEvent,
             strategy = Closure.DELEGATE_FIRST

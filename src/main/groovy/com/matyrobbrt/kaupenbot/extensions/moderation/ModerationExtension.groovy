@@ -32,6 +32,7 @@ final class ModerationExtension implements BotExtension {
             ]
             require Permission.BAN_MEMBERS
             checkIf({ it.member('user') !== null }, 'Unknown user!')
+            checkHierarchy('user')
             action {
                 final days = integer('days', 1)
                 final user = member('user')

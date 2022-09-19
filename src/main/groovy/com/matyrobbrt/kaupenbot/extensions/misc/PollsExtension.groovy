@@ -237,9 +237,7 @@ final class PollsExtension implements BotExtension {
                     }
                 }
             } else if (!KaupenBot.database.withExtension(PollsDAO) { db -> db.isMultipleChoices(it.channel.idLong, it.messageIdLong)}) {
-                RestAction.allOf(it.retrieveMessage()
-                        .flatMap { it.getReactions() }
-                        .flatMap { it})
+                RestAction.allOf(it.retrieveMessage().flatMap { it.getReactions() })
                 it.retrieveMessage()
                     .flatMap {
                         RestAction.allOf(it.reactions.stream().map {

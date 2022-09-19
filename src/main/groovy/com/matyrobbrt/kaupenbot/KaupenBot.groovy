@@ -16,7 +16,6 @@ import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
-import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.common.command.CommandManagerImpl
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionFinder
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionManager
@@ -26,7 +25,6 @@ import com.matyrobbrt.kaupenbot.common.util.DeferredComponentListeners
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.logback.DiscordLogbackAppender
-import com.matyrobbrt.kaupenbot.quote.QuoteCommand
 import com.matyrobbrt.kaupenbot.tricks.AddTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.RunTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.TrickCommand
@@ -113,7 +111,6 @@ final class KaupenBot {
             activity = null
             manualUpsert = true
 
-            addSlashCommands(QuoteCommand())
             EvalCommand().tap {
                 addSlashCommand(it)
                 addCommand(it)
@@ -125,8 +122,6 @@ final class KaupenBot {
             Tricks.getTricks().forEach { tr ->
                 addCommand(new RunTrickCommand.Prefix(tr))
             }
-
-            addContextMenus(new AddQuoteContextMenu())
         }.build()
 
         final bundleName = 'localization/commands'

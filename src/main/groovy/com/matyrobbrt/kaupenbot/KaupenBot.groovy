@@ -284,10 +284,12 @@ class Config {
     static final class LoggingChannels {
         long moderationLogs
         long leaveJoinLogs
+        long messageLogs
     }
     @CompileStatic
     @ConfigSerializable
     static final class Channels {
         List<Long> suggestionChannels = []
+        List<Long> loggingIgnored = []
     }
 }

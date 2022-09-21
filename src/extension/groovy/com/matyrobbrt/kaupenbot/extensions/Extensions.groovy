@@ -140,4 +140,8 @@ class Extensions {
         if (list.isEmpty()) return null
         return list.get(0) as Node
     }
+
+    static String truncate(final String self, int limit) {
+        return self.length() > (limit - 3) ? self.substring(0, limit - 3) + '...' : self
+    }
 }

@@ -41,7 +41,7 @@ final class YouTubeExtension implements BotExtension {
                 description = 'Link this channel with a YouTube channel'
                 options = [
                         new OptionData(OptionType.STRING, 'channel', 'The YouTube channel ID to link', true),
-                        new OptionData(OptionType.ROLE, 'role', 'A role to ping when new videos are uploaded', true)
+                        new OptionData(OptionType.ROLE, 'role', 'A role to ping when new videos are uploaded', false)
                 ]
                 action {
                     final roleId = it.role('role')?.idLong

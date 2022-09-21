@@ -2,6 +2,7 @@ package com.matyrobbrt.kaupenbot.extensions
 
 import com.jagrosh.jdautilities.command.SlashCommandEvent
 import com.matyrobbrt.kaupenbot.common.util.TimeUtils
+import com.sun.net.httpserver.HttpExchange
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull
 
 import javax.annotation.Nonnull
 import javax.annotation.Nullable
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
 
@@ -49,6 +51,10 @@ class Extensions {
     @Nullable
     static User user(final SlashCommandInteractionEvent event, final String name) {
         event.getOption(name)?.asUser
+    }
+    @Nullable
+    static Role role(final SlashCommandInteractionEvent event, final String name) {
+        event.getOption(name)?.asRole
     }
     @Nullable
     static Member member(final SlashCommandInteractionEvent event, final String name) {
@@ -118,5 +124,20 @@ class Extensions {
                 self.getGuildById(it.guildId())?.getChannelById(MessageChannel, it.channelId())?.retrieveMessageById(it.messageId())
             }
             .orElse(null)
+    }
+
+    static void reply(HttpExchange exchange, String message, int code) throws IOException {
+        //noinspection GrDeprecatedAPIUsage
+        final resp = message.getBytes(StandardCharsets.UTF_8)
+        exchange.sendResponseHeaders(code, resp.length)
+        try (final os = exchange.responseBody) {
+            os.write(resp)
+        }
+    }
+
+    static Node getFirst(Node self, String key) {
+        final list = self.get(key) as NodeList
+        if (list.isEmpty()) return null
+        return list.get(0) as Node
     }
 }

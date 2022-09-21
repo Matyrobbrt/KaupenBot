@@ -15,6 +15,7 @@ import com.matyrobbrt.kaupenbot.common.extension.ExtensionManager
 import com.matyrobbrt.kaupenbot.common.util.ConfigurateUtils
 import com.matyrobbrt.kaupenbot.common.util.Constants
 import com.matyrobbrt.kaupenbot.common.util.DeferredComponentListeners
+import com.matyrobbrt.kaupenbot.common.util.EventManagerWithFeedback
 import com.matyrobbrt.kaupenbot.modmail.db.TicketsDAO
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -98,6 +99,7 @@ final class ModMail {
         }
 
         jda = JDABuilder.createLight(dotenv.get('MOD_MAIL_TOKEN'))
+            .setEventManager(new EventManagerWithFeedback())
             .enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT)
             .setActivity(Activity.watching('for your DMs'))
             .addEventListeners(client, commands, new DismissListener(), components)

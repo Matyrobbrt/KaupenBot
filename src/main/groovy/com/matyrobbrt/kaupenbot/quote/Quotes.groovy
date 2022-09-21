@@ -7,6 +7,7 @@ import com.matyrobbrt.kaupenbot.KaupenBot
 import com.matyrobbrt.kaupenbot.common.util.JavaCalls
 import com.matyrobbrt.kaupenbot.util.gson.InstantTypeAdapter
 import groovy.transform.CompileStatic
+import groovy.transform.DefaultsMode
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.TupleConstructor
 import net.dv8tion.jda.api.JDA
@@ -35,7 +36,7 @@ final class Quotes {
      */
     private static Map<Long, List<Quote>> quotes = null
 
-    static final Quote NULL = new Quote()
+    static final Quote NULL = new Quote(null, null,  null, null)
 
     /**
      * The message used for when quotes are null, or do not exist.
@@ -127,7 +128,7 @@ final class Quotes {
 }
 
 @CompileStatic
-@TupleConstructor(excludes = 'id')
+@TupleConstructor(excludes = 'id', defaultsMode = DefaultsMode.OFF)
 @EqualsAndHashCode
 final class Quote {
     final String quote
@@ -141,7 +142,7 @@ final class Quote {
         final quotee = resolveQuotee(jda)
         final author = resolveAuthor(jda)
         return """
-📑 #$id:
+📑 #${id + 1}:
 > $quote
 - $quotee
 ✍🏼 $author

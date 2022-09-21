@@ -1,7 +1,6 @@
 package com.matyrobbrt.kaupenbot.quote
 
 import com.jagrosh.jdautilities.command.CommandClient
-import com.matyrobbrt.kaupenbot.commands.context.AddQuoteContextMenu
 import com.matyrobbrt.kaupenbot.common.command.CommandManager
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension

@@ -17,8 +17,8 @@ import java.util.function.Predicate
 
 @CompileStatic
 abstract class WebhookManager {
-    static WebhookManager of(String name) {
-        return of(e -> e.trim() == name, name, AllowedMentions.none())
+    static WebhookManager of(String name, AllowedMentions mentions = AllowedMentions.none()) {
+        return of(e -> e.trim() == name, name, mentions)
     }
 
     static WebhookManager of(Predicate<String> matcher, String webhookName, AllowedMentions allowedMentions, @Nullable Consumer<Webhook> creationListener) {
@@ -53,10 +53,9 @@ abstract class WebhookManager {
 }
 
 @CompileStatic
-@PackageScope(PackageScopeTarget.CLASS)
 final class WebhookManagerImpl extends WebhookManager {
     private static final List<WebhookManagerImpl> MANAGERS = new CopyOnWriteArrayList<>()
-    private static final OkHttpClient HTTP_CLIENT = new OkHttpClient()
+    static final OkHttpClient HTTP_CLIENT = new OkHttpClient()
     private static ScheduledExecutorService executor
 
     static {

@@ -22,6 +22,7 @@ import com.matyrobbrt.kaupenbot.common.extension.ExtensionManager
 import com.matyrobbrt.kaupenbot.common.util.ConfigurateUtils
 import com.matyrobbrt.kaupenbot.common.util.Constants
 import com.matyrobbrt.kaupenbot.common.util.DeferredComponentListeners
+import com.matyrobbrt.kaupenbot.common.util.EventManagerWithFeedback
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.logback.DiscordLogbackAppender
@@ -29,6 +30,7 @@ import com.matyrobbrt.kaupenbot.tricks.AddTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.RunTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.TrickCommand
 import com.matyrobbrt.kaupenbot.tricks.Tricks
+import com.sun.net.httpserver.HttpServer
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
@@ -132,42 +134,48 @@ final class KaupenBot {
         final localization = ResourceBundleLocalizationFunction.fromBundles(bundleName, locales.toArray(DiscordLocale[]::new)).build()
         final commands = new CommandManagerImpl(localization)
 
+        jda = JDABuilder.createLight(token)
+                .enableIntents(BotConstants.INTENTS)
+                .setEventManager(new EventManagerWithFeedback())
+                .addEventListeners(new EvalCommand.ModalListener())
+                .build()
+
         final extensions = new ExtensionManager(config.disabledExtensions.notIn())
         findExtensions(extensions, [
-                'env' : env
+                'env' : env,
+                'database': database,
+                'jda': jda
         ])
+
+        jda.addEventListener(new DismissListener(), new ThreadListeners(), commands, client, components)
+        jda.addEventListener(new ListenerAdapter() {
+                @Override
+                void onReady(@NotNull @Nonnull ReadyEvent event) {
+                    log.warn('KaupenBot is ready to work. Logged in as: {} ({})', event.getJDA().selfUser.asTag, event.getJDA().selfUser.id)
+
+                    List<CommandData> data = new ArrayList<>()
+
+                    // Build the commands
+                    for (SlashCommand command : client.slashCommands) {
+                        data.add(command.buildCommandData().setLocalizationFunction(localization))
+                    }
+
+                    for (ContextMenu menu : client.contextMenus) {
+                        data.add(menu.buildCommandData().setLocalizationFunction(localization))
+                    }
+
+                    commands.upsert(event.getJDA(), data)
+
+                    extensions.forEachEnabled {
+                        it.scheduleTasks(Constants.EXECUTOR)
+                    }
+                }
+            })
+
         extensions.forEachEnabled {
             it.registerCommands(commands, client)
         }
 
-        jda = JDABuilder.createLight(token)
-                .enableIntents(BotConstants.INTENTS)
-                .addEventListeners(new DismissListener(), new ThreadListeners(), commands, client, components)
-                .addEventListeners(new ListenerAdapter() {
-                    @Override
-                    void onReady(@NotNull @Nonnull ReadyEvent event) {
-                        log.warn('KaupenBot is ready to work. Logged in as: {} ({})', event.getJDA().selfUser.asTag, event.getJDA().selfUser.id)
-
-                        List<CommandData> data = new ArrayList<>()
-
-                        // Build the commands
-                        for (SlashCommand command : client.slashCommands) {
-                            data.add(command.buildCommandData().setLocalizationFunction(localization))
-                        }
-
-                        for (ContextMenu menu : client.contextMenus) {
-                            data.add(menu.buildCommandData().setLocalizationFunction(localization))
-                        }
-
-                        commands.upsert(event.getJDA(), data)
-
-                        extensions.forEachEnabled {
-                            it.scheduleTasks(Constants.EXECUTOR)
-                        }
-                    }
-                })
-                .addEventListeners(new EvalCommand.ModalListener())
-                .build()
         extensions.forEachEnabled { it.subscribeEvents(jda) }
 
         BotConstants.registerMappers(database)
@@ -180,6 +188,26 @@ final class KaupenBot {
         if (config.loggingWebhookUrl !== null && !config.loggingWebhookUrl.isEmpty()) {
             DiscordLogbackAppender.setup(config.loggingWebhookUrl)
             log.warn('Discord logging has been setup!')
+        }
+
+        final List<Closure> shutdowns = []
+
+        if (extensions.anyEnabled { it.usesWebServer() }) {
+            final server = HttpServer.create(new InetSocketAddress(config.webServerPort), 0)
+            extensions.forEachEnabled { it.setupEndpoints(server) }
+            server.start()
+            log.warn('Started HTTP server on port {}', config.webServerPort)
+            shutdowns.add {
+                server.stop(0)
+            }
+        }
+
+        shutdowns.add {
+            jda.shutdownNow()
+        }
+
+        addShutdownHook {
+            shutdowns.each(Closure.&call)
         }
     }
 
@@ -246,6 +274,7 @@ class Config {
     String[] prefixes = new String[] { '!', '-' }
     List<String> disabledExtensions = []
     String loggingWebhookUrl = ''
+    int webServerPort = 7502
 
     LoggingChannels loggingChannels = new LoggingChannels()
     Channels channels = new Channels()

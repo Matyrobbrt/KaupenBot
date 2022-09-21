@@ -65,6 +65,7 @@ tasks.named('run', JavaExec).configure {
 dependencies {
     implementation libs.groovy
     implementation libs.groovy.nio
+    implementation libs.groovy.xml
 
     implementation libs.jda
     implementation libs.jdahelper

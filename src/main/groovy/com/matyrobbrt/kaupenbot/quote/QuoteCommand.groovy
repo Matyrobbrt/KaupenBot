@@ -158,7 +158,7 @@ final class ListCommand extends PaginatedSlashCommand {
                         Paginator.DEFAULT_BUTTON_FACTORY.with(Paginator.ButtonType.DISMISS, id -> Button.secondary(id, Emoji.fromUnicode('\uD83D\uDEAE')))
                 )
                 .buttonOrder(Paginator.ButtonType.FIRST, Paginator.ButtonType.PREVIOUS, Paginator.ButtonType.DISMISS, Paginator.ButtonType.NEXT, Paginator.ButtonType.LAST)
-        );
+        )
         name = 'list'
         help = 'Get all quotes'
         guildOnly = true
@@ -227,7 +227,7 @@ final class ListCommand extends PaginatedSlashCommand {
 @PackageScope(PackageScopeTarget.CLASS) @CompileStatic
 final class RemoveCommand extends SlashCommand {
 
-    public RemoveQuote() {
+    RemoveCommand() {
         name = 'remove'
         help = 'Remove a quote from the list.'
         guildOnly = true
@@ -244,7 +244,7 @@ final class RemoveCommand extends SlashCommand {
             return
         }
         if (!event.member.hasPermission(Permission.MESSAGE_MANAGE) && quote.author != event.user.id) {
-            event.replyProhibited("You cannot remove this quote!").queue()
+            event.replyProhibited('You cannot remove this quote!').queue()
             return
         }
         Quotes.removeQuote(event.getGuild().getIdLong(), index)

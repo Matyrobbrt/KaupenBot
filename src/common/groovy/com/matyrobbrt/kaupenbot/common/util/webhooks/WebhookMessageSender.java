@@ -18,6 +18,27 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class WebhookMessageSender {
+    public static void sendMessage(String url, String message) {
+        try (final var hook = new WebhookClientBuilder(url).build()) {
+            hook.send(message);
+        }
+    }
+    public static void sendMessage(String url, String message, AllowedMentions allowedMentions) {
+        try (final var hook = new WebhookClientBuilder(url).build()) {
+            hook.send(new WebhookMessageBuilder()
+                    .setContent(message)
+                    .setAllowedMentions(allowedMentions)
+                    .build());
+        }
+    }
+
+    public static CompletableFuture<ReadonlyMessage> send(WebhookClient client, String message, AllowedMentions allowedMentions) {
+        return client.send(new WebhookMessageBuilder()
+                .setContent(message)
+                .setAllowedMentions(allowedMentions)
+                .build());
+    }
+
     public static CompletableFuture<ReadonlyMessage> send(WebhookClient client, @Nullable MessageEmbed embed, String username, String avatar, Attachment... attachments) {
         final var message = new WebhookMessageBuilder()
                 .setAvatarUrl(avatar)

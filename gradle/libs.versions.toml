@@ -39,3 +39,4 @@ emoji = { module = "com.sigpwned:emoji4j-core", version.ref = "emoji" }
 
 groovy = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
 groovy-nio = { module = "org.apache.groovy:groovy-nio", version.ref = "groovy" }
+groovy-xml = { module = "org.apache.groovy:groovy-xml", version.ref = "groovy" }

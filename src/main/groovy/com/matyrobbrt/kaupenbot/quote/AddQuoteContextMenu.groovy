@@ -1,10 +1,10 @@
-package com.matyrobbrt.kaupenbot.commands.context
+package com.matyrobbrt.kaupenbot.quote
 
 import com.jagrosh.jdautilities.command.MessageContextMenu
 import com.jagrosh.jdautilities.command.MessageContextMenuEvent
-import com.matyrobbrt.kaupenbot.quote.Quote
-import com.matyrobbrt.kaupenbot.quote.Quotes
 import groovy.transform.CompileStatic
+
+import java.time.Instant
 
 @CompileStatic
 final class AddQuoteContextMenu extends MessageContextMenu {
@@ -22,15 +22,15 @@ final class AddQuoteContextMenu extends MessageContextMenu {
         final text = event.getTarget().getContentRaw()
         final guildId = event.getGuild().getIdLong()
 
-        final finishedQuote = new Quote(text, event.target.author.id, event.user.id)
+        final finishedQuote = new Quote(text, event.target.author.id, event.user.id, Instant.now())
 
-        final quoteID = Quotes.getQuoteSlot(guildId);
+        final quoteID = Quotes.getQuoteSlot(guildId)
         finishedQuote.id = quoteID
 
         Quotes.addQuote(guildId, finishedQuote)
 
         event.replyEmbeds(embed {
-            title = "Added quote $quoteID"
+            title = "Added quote ${quoteID + 1}"
             description = finishedQuote.quote
         }).queue()
     }

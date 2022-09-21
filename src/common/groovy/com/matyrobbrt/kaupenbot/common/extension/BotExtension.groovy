@@ -3,7 +3,10 @@ package com.matyrobbrt.kaupenbot.common.extension
 import com.jagrosh.jdautilities.command.CommandClient
 import com.matyrobbrt.kaupenbot.api.PluginRegistry
 import com.matyrobbrt.kaupenbot.common.command.CommandManager
+import com.sun.net.httpserver.HttpServer
 import groovy.transform.CompileStatic
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
 import net.dv8tion.jda.api.JDA
 import org.codehaus.groovy.transform.GroovyASTTransformationClass
 import org.jetbrains.annotations.Nullable
@@ -20,6 +23,9 @@ interface BotExtension {
     default void registerPlugins(PluginRegistry registry) {}
 
     default void scheduleTasks(ScheduledExecutorService service) {}
+
+    default void setupEndpoints(HttpServer server) {}
+    default boolean usesWebServer() { false }
 }
 
 @Target([ElementType.TYPE])
@@ -53,6 +59,7 @@ final class ExtensionManager {
     private final Map<String, BotExtension> namedExtensions = [:]
     private final List<BotExtension> unnamedExtensions = []
 
+    @SuppressWarnings('unused')
     void register(@Nullable String id, BotExtension extension) {
         if (id === null) {
             unnamedExtensions.add(extension)
@@ -66,6 +73,12 @@ final class ExtensionManager {
         namedExtensions.forEach { name, ext ->
             if (enabledPredicate.test(name))
                 consumer.accept(ext)
+        }
+    }
+
+    boolean anyEnabled(@ClosureParams(value = SimpleType, options = 'com.matyrobbrt.kaupenbot.common.extension.BotExtension') Closure predicate) {
+        return unnamedExtensions.any(predicate) || namedExtensions.any { name, ext ->
+            enabledPredicate.test(name) && predicate.call(ext)
         }
     }
 }

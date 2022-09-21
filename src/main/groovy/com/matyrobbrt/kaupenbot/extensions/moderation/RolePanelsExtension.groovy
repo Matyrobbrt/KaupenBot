@@ -78,7 +78,7 @@ final class RolePanelsExtension implements BotExtension {
                             for (final entry : data.emojis) {
                                 final role = KaupenBot.jda.getRoleById(entry.value.roleId())
                                 if (role !== null) {
-                                    it.addOption(role.name, String.valueOf(entry.value.roleId()), entry.key)
+                                    it.addOption(role.name, String.valueOf(entry.value.roleId()), data.emojis[entry.key]?.description(), entry.key)
                                 }
                             }
                         }.setMaxValues(data.emojis.size()).setMinValues(0).build())

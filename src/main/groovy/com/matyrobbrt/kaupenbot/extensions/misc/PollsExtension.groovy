@@ -66,7 +66,7 @@ final class PollsExtension implements BotExtension {
                     new OptionData(OptionType.BOOLEAN, 'multiple-choices', 'If multiple options should be allowed by this poll. Defaults to false', false)
             ]
             action {
-                final emojis = getOption('options', DEFAULT_EMOJIS, { parseEmojis(it.asString) })
+                final emojis = getOption('options', DEFAULT_EMOJIS, { it.asString.parseEmojis() })
                 if (emojis.size() > 20) {
                     replyProhibited('More than 20 options were provided!').queue()
                     return
@@ -301,27 +301,6 @@ final class PollsExtension implements BotExtension {
                     .flatMap({ msg.startedThread !== null }) { msg.startedThread.sendMessage('This poll has ended!')
                         .flatMap { msg.startedThread.manager.setLocked(true).setArchived(true) } }
             }.queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE))
-    }
-
-    static List<Emoji> parseEmojis(String str) {
-        final Set<Emoji> emojis = []
-
-        final matcher = Message.MentionType.EMOJI.pattern.matcher(str)
-        while (matcher.find()) {
-            emojis.add(Emoji.fromFormatted(matcher.group()))
-        }
-
-        final graphemeMatcher = new GraphemeMatcher(str)
-        while (graphemeMatcher.find()) {
-            final match = graphemeMatcher.grapheme()
-            emojis.add(Emoji.fromUnicode(match.toString()))
-        }
-
-        final list = new ArrayList<Emoji>(emojis)
-        list.sort(Comparator.<Emoji>comparingInt {
-            str.indexOf(it.formatted)
-        })
-        return list
     }
 
     @CompileStatic

@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
 import net.dv8tion.jda.api.interactions.commands.localization.LocalizationFunction
 
 import java.util.function.Consumer
@@ -21,10 +22,11 @@ import java.util.function.Predicate
 @CompileStatic
 sealed class CommandBuilder permits PaginatedCommandBuilder {
     String name
-    String description
+    String description = '.'
     boolean guildOnly
     List<OptionData> options = []
     @PackageScope final List<CommandBuilder> subcommands = []
+    @PackageScope final Map<String, CommandBuilder> groups = [:]
     final List<Permission> requiredPermissions = []
     final List<Predicate<SlashCommandInteractionEvent>> predicates = []
     Closure callback
@@ -80,7 +82,7 @@ sealed class CommandBuilder permits PaginatedCommandBuilder {
     void autoCompleteOption(String optionName, @DelegatesTo(
             value = CommandAutoCompleteInteractionEvent,
             strategy = Closure.DELEGATE_FIRST
-    ) @ClosureParams(value = SimpleType, options = ['java.lang.String', 'net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent']) Closure closure) {
+    ) @ClosureParams(value = SimpleType, options = 'java.lang.String') Closure closure) {
         final oldAutoComplete = this.autoComplete
         this.autoComplete {
             if (oldAutoComplete !== null) {
@@ -92,7 +94,7 @@ sealed class CommandBuilder permits PaginatedCommandBuilder {
             if (focusedOption?.name == optionName) {
                 closure.resolveStrategy = Closure.DELEGATE_FIRST
                 closure.delegate = it
-                closure(focusedOption.value, it)
+                closure(focusedOption.value)
             }
         }
     }
@@ -105,6 +107,14 @@ sealed class CommandBuilder permits PaginatedCommandBuilder {
         subcommands.add(builder)
     }
 
+    void group(@DelegatesTo(value = CommandBuilder, strategy = Closure.DELEGATE_FIRST) Closure group) {
+        final builder = new CommandBuilder()
+        group.delegate = builder
+        group.resolveStrategy = Closure.DELEGATE_FIRST
+        group()
+        this.groups[builder.name] = builder
+    }
+
     SlashCommandData build(LocalizationFunction localizationFunction) {
         final command = Commands.slash(name, description)
         command.setGuildOnly(guildOnly)
@@ -112,15 +122,26 @@ sealed class CommandBuilder permits PaginatedCommandBuilder {
             command.setDefaultPermissions(DefaultMemberPermissions.enabledFor(requiredPermissions))
         command.setLocalizationFunction(localizationFunction)
         subcommands.each {
-            final subcommandData = new SubcommandData(it.name, it.description)
-            if (!it.options.isEmpty()) {
-                subcommandData.addOptions(it.options)
-            }
-            command.addSubcommands(subcommandData)
+            command.addSubcommands(it.asSubCommand())
         }
         if (!options.isEmpty()) {
             command.addOptions(options)
         }
+        groups.forEach { name, group ->
+            final data = new SubcommandGroupData(name, '.')
+            group.subcommands.each {
+                data.addSubcommands(it.asSubCommand())
+            }
+            command.addSubcommandGroups(data)
+        }
         return command
+    }
+
+    SubcommandData asSubCommand() {
+        final subcommandData = new SubcommandData(name, description)
+        if (!options.isEmpty()) {
+            subcommandData.addOptions(options)
+        }
+        return subcommandData
     }
 }

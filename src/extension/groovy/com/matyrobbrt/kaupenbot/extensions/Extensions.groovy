@@ -2,6 +2,7 @@ package com.matyrobbrt.kaupenbot.extensions
 
 import com.jagrosh.jdautilities.command.SlashCommandEvent
 import com.matyrobbrt.kaupenbot.common.util.TimeUtils
+import com.sigpwned.emoji4j.core.GraphemeMatcher
 import com.sun.net.httpserver.HttpExchange
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
@@ -9,6 +10,7 @@ import groovy.transform.stc.FirstParam
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
 import net.dv8tion.jda.api.interactions.commands.Command
@@ -143,5 +145,26 @@ class Extensions {
 
     static String truncate(final String self, int limit) {
         return self.length() > (limit - 3) ? self.substring(0, limit - 3) + '...' : self
+    }
+
+    static List<Emoji> parseEmojis(String self) {
+        final Set<Emoji> emojis = []
+
+        final matcher = Message.MentionType.EMOJI.pattern.matcher(self)
+        while (matcher.find()) {
+            emojis.add(Emoji.fromFormatted(matcher.group()))
+        }
+
+        final graphemeMatcher = new GraphemeMatcher(self)
+        while (graphemeMatcher.find()) {
+            final match = graphemeMatcher.grapheme()
+            emojis.add(Emoji.fromUnicode(match.toString()))
+        }
+
+        final list = new ArrayList<Emoji>(emojis)
+        list.sort(Comparator.<Emoji>comparingInt {
+            self.indexOf(it.formatted)
+        })
+        return list
     }
 }

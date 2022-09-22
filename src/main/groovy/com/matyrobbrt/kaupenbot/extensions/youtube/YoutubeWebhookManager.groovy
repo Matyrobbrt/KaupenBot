@@ -17,10 +17,14 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.IWebhookContainer
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageChannel
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.Response
 import org.jdbi.v3.core.Jdbi
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -186,8 +190,17 @@ final class YoutubeWebhookManager {
                             it.key + '=' + URLEncoder.encode(it.value.toString(), Charset.forName('utf-8'))
                         }.toList().join('&'))
                 .build())
-                .execute()
-                .close()
+                .enqueue(new Callback() {
+                    @Override
+                    void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+                    }
+
+                    @Override
+                    void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+
+                    }
+                })
     }
 }
 

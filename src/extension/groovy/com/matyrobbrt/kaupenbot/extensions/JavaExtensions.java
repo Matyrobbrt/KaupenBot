@@ -6,7 +6,9 @@ import groovy.transform.stc.ClosureParams;
 import groovy.transform.stc.SecondParam;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.Event;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.requests.restaction.interactions.AutoCompleteCallbackAction;
 
 import java.util.Collection;
 import java.util.function.Predicate;
@@ -26,6 +28,10 @@ public class JavaExtensions {
                 closure.call(event);
             }
         });
+    }
+
+    public static AutoCompleteCallbackAction checkAcknowledgement(AutoCompleteCallbackAction self, CommandAutoCompleteInteractionEvent event) {
+        return self.addCheck(() -> !event.isAcknowledged());
     }
 
     public static <T> Predicate<T> notIn(Collection<T> self) {

@@ -75,14 +75,17 @@ final class CommandManagerImpl implements EventListener, CommandManager {
     private void recursivelyListen(CommandBuilder command, String prefix) {
         addListener(prefix + command.name, command.listener)
         if (command.autoComplete !== null) {
-            autoCompleteListeners[prefix + command.name, (event) -> {
+            autoCompleteListeners.put(prefix + command.name, ((event) -> {
                 //noinspection UnnecessaryQualifiedReference
                 command.autoComplete.resolveStrategy = Closure.DELEGATE_FIRST
                 command.autoComplete.delegate = event
                 command.autoComplete.call(event)
-            }]
+            }) as Consumer<CommandAutoCompleteInteractionEvent>)
         }
         command.subcommands.each {
+            recursivelyListen(it, prefix + command.name + '/')
+        }
+        command.groups.each { name, it ->
             recursivelyListen(it, prefix + command.name + '/')
         }
     }

@@ -6,8 +6,9 @@ import com.matyrobbrt.kaupenbot.KaupenBot
 import com.matyrobbrt.kaupenbot.common.command.CommandManager
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
+import com.matyrobbrt.kaupenbot.db.RolePanelsDAO
 import groovy.transform.CompileStatic
-import groovy.transform.TupleConstructor
+import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
@@ -16,117 +17,190 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
-import net.dv8tion.jda.api.interactions.components.ActionComponent
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.ItemComponent
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenuInteraction
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 
 import java.awt.Color
+import java.util.stream.Collectors
 
 @CompileStatic
-@RegisterExtension(botId = 'kbot', value = 'role-panels')
+@RegisterExtension(value = 'rolePanels', botId = 'kbot')
 final class RolePanelsExtension implements BotExtension {
-
-    private final Map<Long, SelfRoleData> data = Collections.synchronizedMap([:])
+    private static final String ID = 'role-panel'
 
     @Override
     void registerCommands(CommandManager manager, CommandClient client) {
         manager.addCommand {
-            guildOnly = true
-            name = 'role-panel'
-            require Permission.MANAGE_ROLES
-            description = 'Commands to manage role panels.'
+            name = 'role-panels'
+            require(Permission.MANAGE_ROLES)
             subCommand {
-                name = 'stop'
-                description = 'Stop a role panel configuration, and send the message.'
+                name = 'create'
                 options = [
-                        new OptionData(OptionType.STRING, 'id', 'The message ID of the ongoing configuration.', true),
-                        new OptionData(OptionType.STRING, 'type', 'The type of the role panel to create.', true).addEnum(PanelType),
-                        new OptionData(OptionType.BOOLEAN, 'drop', 'If the self role configuration should be dropped. Default: false')
+                        new OptionData(OptionType.STRING, 'id', 'Panel ID', true),
+                        new OptionData(OptionType.STRING, 'mode', 'The panel mode', true).addEnum(PanelMode),
+                        new OptionData(OptionType.STRING, 'type', 'The panel type', true).addEnum(PanelType),
+                        new OptionData(OptionType.STRING, 'title', 'Panel title'),
+                        new OptionData(OptionType.STRING, 'description', 'Panel description'),
+                        new OptionData(OptionType.STRING, 'colour', 'Panel colour')
                 ]
-                checkIf({ data.containsKey(it.getOption('id')?.asLong) }, 'Unknown configuration message ID.')
+                description = 'Create a new role panel'
+
                 action {
-                    final id = getOption('id')?.asLong
-                    if (getOption('drop')?.asBoolean) {
-                        data.remove(id)
-                        replyEphemeral("Dropped role panel with ID $id!").queue()
+                    final id = it.string('id')
+                    if (KaupenBot.database.withExtension(RolePanelsDAO) { it.get(id) !== null }) {
+                        replyProhibited('A role panel with that ID exists already!').queue()
                         return
                     }
-                    deferReply().queue()
-                    final data = this.data[id]
-                    final embed = embed {
-                        title = data.title
-                        color = data.colour
-                        description = data.description + '\n\n'
-                        final Iterator<Map.Entry<Emoji, EmojiData>> iterator = data.emojis.iterator()
-                        while (iterator.hasNext()) {
-                            final Map.Entry<Emoji, EmojiData> next = iterator.next()
-                            appendDescription("${next.key.formatted}: ${next.value.description()}")
-                            if (iterator.hasNext()) appendDescription('\n')
-                        }
-                    }
-                    final type = enumOption(PanelType, 'type')
-                    final List<? extends ActionComponent> components = switch (type) {
-                        case PanelType.SELECTION_MENU -> List.of(SelectMenu.create('role-panel').tap {
-                            for (final entry : data.emojis) {
-                                final role = KaupenBot.jda.getRoleById(entry.value.roleId())
-                                if (role !== null) {
-                                    it.addOption(role.name, String.valueOf(entry.value.roleId()), data.emojis[entry.key]?.description(), entry.key)
+
+                    final embed = new EmbedBuilder()
+                    embed.title = it.string('title') ?: id
+                    if (it.getOption('description')) embed.description = it.string('description')
+                    if (it.getOption('colour')) embed.color = Color.decode(it.string('colour'))
+
+                    embed.footer = "Role Panel ID: $id"
+                    it.channel.sendMessageEmbeds(embed.build())
+                            .flatMap { _ ->
+                                KaupenBot.database.useExtension(RolePanelsDAO) { RolePanelsDAO db ->
+                                    db.insert(id, it.channel.idLong, _.idLong, it.enumOption(PanelMode, 'mode'), it.enumOption(PanelType, 'type'))
                                 }
+                                it.replyEphemeral('Role panel created!')
                             }
-                        }.setMaxValues(data.emojis.size()).setMinValues(0).build())
-                        case PanelType.BUTTONS -> data.emojis.entrySet().stream()
-                            .map {
-                                final role = KaupenBot.jda.getRoleById(it.value.roleId())
-                                if (role !== null) {
-                                    return Button.secondary("role-panel/${role.id}", it.key)
-                                }
-                                return null
-                            }.filter { it !== null }.toList()
-                    }
-                    final List<ActionRow> rows = []
-                    List<ItemComponent> current = []
-                    components.each {
-                        if (current.size() >= it.maxPerRow) {
-                            rows.add(ActionRow.of(current))
-                            current = []
-                            current.add(it)
-                        } else {
-                            current.add(it)
-                        }
-                    }
-                    if (!current.isEmpty())
-                        rows.add(ActionRow.of(current))
-                    guild.getChannelById(MessageChannel, data.targetChannel).sendMessageEmbeds(embed)
-                        .addComponents(rows)
-                        .flatMap { hook.sendMessage("Successfully sent role panel! [Jump to message]($it.jumpUrl).").setSuppressEmbeds(true) }
-                        .queue((_) -> this.data.remove(id))
+                            .queue()
                 }
             }
             subCommand {
-                name = 'start'
-                description = 'Start a role panel configuration.'
+                name = 'delete'
+                description = 'Delete a role panel'
                 options = [
-                        new OptionData(OptionType.CHANNEL, 'channel', 'The channel to send the role panel in.'),
-                        new OptionData(OptionType.STRING, 'title', 'Role panel title'),
-                        new OptionData(OptionType.STRING, 'description', 'Role panel description'),
-                        new OptionData(OptionType.STRING, 'colour', 'Role panel colour')
+                        new OptionData(OptionType.STRING, 'id', 'The role panel ID', true).setAutoComplete(true)
                 ]
+
                 action {
-                    final target = getOption('channel')?.asChannel?.asGuildMessageChannel()
-                    reply('Started role panel configuration! Please react with the emoji you want to assign a role to!')
-                        .flatMap { it.retrieveOriginal() }
-                        .queue {
-                            it.editMessage(it.contentRaw + ' Message ID: ' + it.id).queue()
-                            data.put(it.idLong, new SelfRoleData(target.idLong, string('title'), string('description'), Color.decode(string('colour', '0x000000'))))
+                    final id = it.string('id')
+                    final info = KaupenBot.database.withExtension(RolePanelsDAO) { it.get(id) }
+                    if (info === null) {
+                        replyProhibited('Unknown role panel!').queue()
+                        return
+                    }
+                    KaupenBot.database.useExtension(RolePanelsDAO) { it.remove(id) }
+                    it.getJDA().getChannelById(MessageChannel, info.getChannelId())
+                        .deleteMessageById(info.messageId)
+                        .flatMap { _ -> it.replyEphemeral('Successfully deleted role panel!') }
+                        .queue()
+                }
+
+                autoCompleteOption('id') { current ->
+                    replyChoiceStrings(KaupenBot.database.withExtension(RolePanelsDAO) { it.allIds }.findAll {
+                        it.startsWith(current)
+                    }).checkAcknowledgement(delegate).queue()
+                }
+            }
+
+            group {
+                name = 'role'
+                subCommand {
+                    name = 'add'
+                    description = 'Add a role to a panel'
+                    options = [
+                            new OptionData(OptionType.STRING, 'id', 'The panel ID', true).setAutoComplete(true),
+                            new OptionData(OptionType.ROLE, 'role', 'The role to add to the panel', true),
+                            new OptionData(OptionType.STRING, 'emoji', 'The emoji to represent the role'),
+                            new OptionData(OptionType.STRING, 'description', "The role's description")
+                    ]
+
+                    action {
+                        final info = KaupenBot.database.withExtension(RolePanelsDAO) { db -> db.get(it.string('id')) }
+                        if (info === null) {
+                            replyProhibited('Unknown role panel!').queue()
+                            return
                         }
+                        final role = it.role('role')
+                        it.deferReply(true).queue()
+                        final emoji = it.string('emoji')?.parseEmojis()?.find()
+                        it.getJDA().getChannelById(MessageChannel, info.getChannelId())
+                            .retrieveMessageById(info.getMessageId())
+                            .flatMap { msg ->
+                                return switch (info.mode) {
+                                    case PanelMode.SelectMenu -> {
+                                        final SelectMenu.Builder menu = msg.actionRows.empty ? SelectMenu.create(ID) : (msg.actionRows[0].iterator().find() as SelectMenu).createCopy()
+                                        menu.addOption(role.name, role.id, it.string('description'), emoji)
+                                        menu.setMinValues(0).setMaxValues(menu.options.size())
+                                        yield msg.editMessage(new MessageEditBuilder().build())
+                                            .setActionRow(menu.build())
+                                    }
+                                    case PanelMode.Buttons -> {
+                                        final components = msg.actionRows.stream()
+                                                .flatMap { it.toList().stream() }
+                                                .collect(Collectors.toCollection { new ArrayList<ItemComponent>() })
+                                        components.add(Button.secondary(ID + '/' + role.id, (emoji?.type == Emoji.Type.UNICODE ? (emoji.formatted + ' ') : '') + role.name))
+                                        yield msg.editMessage(new MessageEditBuilder().build())
+                                            .setComponents(ActionRow.partitionOf(components))
+                                    }
+                                }
+                            }
+                            .flatMap { _ -> it.hook.editOriginal('Successfully added role!') }
+                            .queue()
+                    }
+
+                    autoCompleteOption('id') { current ->
+                        replyChoiceStrings(KaupenBot.database.withExtension(RolePanelsDAO) { it.allIds }.findAll {
+                            it.startsWith(current)
+                        }).checkAcknowledgement(delegate).queue()
+                    }
+                }
+
+                subCommand {
+                    name = 'remove'
+                    description = 'Remove a role from a role panel'
+                    options = [
+                            new OptionData(OptionType.STRING, 'id', 'Role panel ID', true).setAutoComplete(true),
+                            new OptionData(OptionType.ROLE, 'role', 'The role to remove', true)
+                    ]
+                    action {
+                        final info = KaupenBot.database.withExtension(RolePanelsDAO) { db -> db.get(it.string('id')) }
+                        if (info === null) {
+                            replyProhibited('Unknown role panel!').queue()
+                            return
+                        }
+
+                        final role = it.role('role')
+                        it.deferReply(true).queue()
+                        it.getJDA().getChannelById(MessageChannel, info.getChannelId())
+                                .retrieveMessageById(info.getMessageId())
+                                .flatMap { msg ->
+                                    return switch (info.mode) {
+                                        case PanelMode.SelectMenu -> {
+                                            final SelectMenu.Builder menu = msg.actionRows.empty ? SelectMenu.create(ID) : (msg.actionRows[0].iterator().find() as SelectMenu).createCopy()
+                                            menu.options.removeIf { it.value == role.id }
+                                            yield msg.editMessage(new MessageEditBuilder().build())
+                                                    .setActionRow(menu.build())
+                                        }
+                                        case PanelMode.Buttons -> {
+                                            final components = msg.actionRows.stream()
+                                                    .flatMap { it.toList().stream() }
+                                                    .collect(Collectors.toCollection { new ArrayList<ItemComponent>() })
+                                            components.removeIf { it instanceof Button && it.id.contains(role.id) }
+                                            yield msg.editMessage(new MessageEditBuilder().build())
+                                                    .setComponents(ActionRow.partitionOf(components))
+                                        }
+                                    }
+                                }
+                                .flatMap { _ -> it.hook.editOriginal('Successfully removed role!') }
+                                .queue()
+                    }
+
+                    autoCompleteOption('id') { current ->
+                        replyChoiceStrings(KaupenBot.database.withExtension(RolePanelsDAO) { it.allIds }.findAll {
+                            it.startsWith(current)
+                        }).checkAcknowledgement(delegate).queue()
+                    }
                 }
             }
         }
@@ -134,38 +208,8 @@ final class RolePanelsExtension implements BotExtension {
 
     @Override
     void subscribeEvents(JDA jda) {
-        jda.subscribe(MessageReactionAddEvent) {
-            final messageData = data[it.messageIdLong]
-            if (messageData === null) return
-            messageData.currentEmoji = it.reaction.emoji
-            it.retrieveMessage().flatMap {
-                it.editMessage(it.contentRaw).setEmbeds(embed {
-                    description = "Currently configuring: ${messageData.currentEmoji.formatted}"
-                })
-            }.flatMap { _ -> it.reaction.removeReaction(it.user) }
-            .queue()
-        }
-        jda.subscribe(MessageReceivedEvent) {
-            if (it.message.messageReference === null) return
-            final messageData = data[it.message.messageReference.messageIdLong]
-            if (messageData === null || messageData.currentEmoji === null || !it.member.hasPermission(Permission.MANAGE_ROLES)) return
-            final contentSplit = it.message.contentRaw.split(':')
-            try {
-                final roleId = Long.parseLong(contentSplit[0].trim())
-                final emoji = messageData.currentEmoji
-                final desc = contentSplit.drop(1).join(':').trim()
-                messageData.emojis[emoji] = new EmojiData(roleId, desc)
-                messageData.currentEmoji = null
-                it.message.delete().flatMap { _ ->
-                    it.message.channel.retrieveMessageById(it.message.messageReference.messageIdLong)
-                }.flatMap {
-                    it.editMessage(it.contentRaw + "\n${emoji.formatted}: <@&${roleId}>: $desc").setEmbeds()
-                }.queue()
-            } catch (NumberFormatException ignored) {}
-        }
-
         jda.subscribe(SelectMenuInteractionEvent) {
-            if (!fromGuild || selectMenu.id != 'role-panel') return
+            if (!fromGuild || selectMenu.id != ID) return
             final var selfMember = guild.getSelfMember()
             final var selectedRoles = selectedOptions.stream()
                     .map(SelectOption::getValue)
@@ -180,40 +224,27 @@ final class RolePanelsExtension implements BotExtension {
         jda.subscribe(ButtonInteractionEvent) {
             if (!fromGuild || it.button.id === null) return
             final splitId = it.button.id.split('/')
-            if (splitId[0] != 'role-panel' || splitId.length !== 2) return
+            if (splitId[0] != ID || splitId.length !== 2) return
             final role = guild.getRoleById(splitId[1])
-            if (role === null) {
-                replyProhibited('Unknown role!').queue()
-            } else {
+            if (role !== null) {
                 final boolean hadRole = role in member.roles
                 (hadRole ? guild.removeRoleFromMember(user, role) : guild.addRoleToMember(user, role))
-                    .reason('Role Selection').flatMap {
-                        replyEphemeral("Successfully ${hadRole ? 'added' : 'removed'} role!")
-                    }.queue()
+                        .reason('Role Selection').flatMap {
+                    replyEphemeral("Successfully ${hadRole ? 'added' : 'removed'} role!")
+                }.queue()
+            } else {
+                replyProhibited('Unknown role!').queue()
             }
         }
     }
 
     private void handleRoleSelection(final SelectMenuInteraction interaction, final Collection<Role> selectedRoles, final Guild guild) {
-        final var member = Objects.requireNonNull(interaction.getMember())
+        final var member = interaction.member
         final var toAdd = new ArrayList<Role>(selectedRoles.size())
         final var toRemove = new ArrayList<Role>(selectedRoles.size())
 
-        interaction
-                .getComponent()
-                .getOptions()
-                .stream()
-                .map(selectOption -> {
-                    final var role = guild.getRoleById(selectOption.getValue())
-
-                    if (role === null) {
-                        KaupenBot.log.warn(
-                                "The {} ({}) role doesn't exist anymore but it is still an option in a selection menu!",
-                                selectOption.getLabel(), selectOption.getValue())
-                    }
-
-                    return role
-                })
+        interaction.component.options
+                .stream().map { guild.getRoleById(it.value) }
                 .filter(Objects::nonNull)
                 .forEach(role -> {
                     if (selectedRoles.contains(role)) {
@@ -229,33 +260,10 @@ final class RolePanelsExtension implements BotExtension {
                 .queue()
     }
 
-    @CompileStatic
-    @TupleConstructor(excludes = ['emojis', 'currentEmoji'])
-    static final class SelfRoleData {
-        final Map<Emoji, EmojiData> emojis = [:]
-        final long targetChannel
-        final String title
-        final String description
-        final Color colour
-
-        Emoji currentEmoji
+    static enum PanelMode {
+        Buttons, SelectMenu
     }
-
-    @CompileStatic
-    static record EmojiData(long roleId, String description) {}
-
     static enum PanelType {
-        SELECTION_MENU {
-            @Override
-            String toString() {
-                'Selection menu'
-            }
-        },
-        BUTTONS {
-            @Override
-            String toString() {
-                'Buttons'
-            }
-        }
+        Normal
     }
 }

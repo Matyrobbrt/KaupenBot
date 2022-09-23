@@ -68,6 +68,10 @@ class Extensions {
         final channel = event.getOption(name)?.asChannel
         return channel?.type === ChannelType.TEXT ? channel.asTextChannel() : null
     }
+    @Nullable
+    static GuildMessageChannel messageChannel(final SlashCommandInteractionEvent event, final String name) {
+        event.getOption(name)?.asChannel?.asGuildMessageChannel()
+    }
 
     static int integer(final SlashCommandInteractionEvent event, final String name, final int defaultValue = 1) {
         final opt = event.getOption(name)

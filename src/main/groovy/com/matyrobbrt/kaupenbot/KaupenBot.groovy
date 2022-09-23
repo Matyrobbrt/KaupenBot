@@ -16,6 +16,7 @@ import com.matyrobbrt.kaupenbot.apiimpl.PluginLoader
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.CommandsPluginImpl
 import com.matyrobbrt.kaupenbot.apiimpl.plugins.EventsPluginImpl
 import com.matyrobbrt.kaupenbot.commands.EvalCommand
+import com.matyrobbrt.kaupenbot.common.command.CommandManager
 import com.matyrobbrt.kaupenbot.common.command.CommandManagerImpl
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionFinder
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionManager
@@ -26,10 +27,6 @@ import com.matyrobbrt.kaupenbot.common.util.EventManagerWithFeedback
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.listener.ThreadListeners
 import com.matyrobbrt.kaupenbot.logback.DiscordLogbackAppender
-import com.matyrobbrt.kaupenbot.tricks.AddTrickCommand
-import com.matyrobbrt.kaupenbot.tricks.RunTrickCommand
-import com.matyrobbrt.kaupenbot.tricks.TrickCommand
-import com.matyrobbrt.kaupenbot.tricks.Tricks
 import com.sun.net.httpserver.HttpServer
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
@@ -78,6 +75,7 @@ final class KaupenBot {
     static Config config
     static JDA jda
     static CommandClient client
+    static CommandManager commandManager
     static final Map<DiscordLocale, ResourceBundle> BUNDLES = new HashMap<>()
 
     static void start(Dotenv env) throws IOException {
@@ -112,18 +110,6 @@ final class KaupenBot {
             prefixes = config.prefixes
             activity = null
             manualUpsert = true
-
-            EvalCommand().tap {
-                addSlashCommand(it)
-                addCommand(it)
-            }
-            // TODO slash command with modal for add trick
-            addCommand(AddTrickCommand())
-            addSlashCommand(TrickCommand())
-
-            Tricks.getTricks().forEach { tr ->
-                addCommand(new RunTrickCommand.Prefix(tr))
-            }
         }.build()
 
         final bundleName = 'localization/commands'
@@ -133,6 +119,7 @@ final class KaupenBot {
         }
         final localization = ResourceBundleLocalizationFunction.fromBundles(bundleName, locales.toArray(DiscordLocale[]::new)).build()
         final commands = new CommandManagerImpl(localization)
+        commandManager = commands
 
         jda = JDABuilder.createLight(token)
                 .enableIntents(BotConstants.INTENTS)
@@ -255,13 +242,15 @@ final class BotConstants {
                 })
         )
         loader.track(scriptsDir, out)
+
+        KaupenBot.log.warn('Prepared plugin API!')
     }
 
     static void registerPlugins(PluginRegistry registry) {
         final events = new EventsPluginImpl()
         KaupenBot.jda.addEventListener(events)
         registry.registerPlugin('events', events)
-        registry.registerPlugin('commands', new CommandsPluginImpl(KaupenBot.client))
+        registry.registerPlugin('commands', new CommandsPluginImpl(KaupenBot.client, KaupenBot.commandManager))
     }
 }
 

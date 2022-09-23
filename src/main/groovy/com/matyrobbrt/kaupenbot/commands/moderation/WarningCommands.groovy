@@ -97,6 +97,10 @@ final class WarnCommand extends Command {
                     .queue()
             return
         }
+        if (toWarn.bot) {
+            event.message.reply('Cannot warn bots!')
+            return
+        }
 
         final warnId = withExtension { WarningMapper.insert(it, toWarn.idLong, event.guild.idLong, reason, event.member.idLong) }
         final log = { boolean didDm ->
@@ -277,6 +281,11 @@ static boolean canInteract(final SlashCommandEvent event, final Member target) {
         return false
     }
 
+    if (target.user.bot) {
+        event.replyEphemeral('Cannot warn bot!').queue()
+        return false
+    }
+
     return true
 }
 
@@ -293,7 +302,7 @@ static void logWarning(Guild guild, User warnedUser, UUID warnId, Member moderat
                 setAuthor(moderator.effectiveName, null, moderator.effectiveAvatarUrl)
                 setFooter("User ID: $warnedUser.id", warnedUser.effectiveAvatarUrl)
                 if (!managedToDM) {
-                    appendDescription('\n*User could not be messages.*')
+                    appendDescription('\n*User could not be messaged.*')
                 }
             }).queue()
 

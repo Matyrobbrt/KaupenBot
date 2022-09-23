@@ -28,6 +28,7 @@ final class ModerationExtension implements BotExtension {
             guildOnly = true
             options = [
                     new OptionData(OptionType.USER, 'user', 'The user to soft-ban.', true),
+                    new OptionData(OptionType.STRING, 'reason', 'The reason for the soft-ban', true),
                     new OptionData(OptionType.INTEGER, 'days', 'The amount of days to delete messages for.').setRequiredRange(1, 7)
             ]
             require Permission.BAN_MEMBERS
@@ -37,7 +38,7 @@ final class ModerationExtension implements BotExtension {
                 final days = integer('days', 1)
                 final user = member('user')
                 deferReply().queue()
-                user.ban(days, "Soft ban issued by ${it.user.asTag} (${it.user.id})")
+                user.ban(days, "Soft ban issued by ${it.user.asTag}: ${string('reason')}")
                         .delay(1, TimeUnit.SECONDS)
                         .flatMap { guild.unban(user) }
                         .flatMap { hook.editOriginal('✅ User has been successfully soft banned!') }

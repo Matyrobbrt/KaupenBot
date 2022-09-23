@@ -10,26 +10,21 @@ import com.matyrobbrt.kaupenbot.tricks.RunTrickCommand
 import com.matyrobbrt.kaupenbot.tricks.TrickCommand
 import com.matyrobbrt.kaupenbot.tricks.Tricks
 import groovy.transform.CompileStatic
-import groovy.transform.PackageScope
-import groovy.transform.PackageScopeTarget
 
 @CompileStatic
-@PackageScope([PackageScopeTarget.CLASS])
 @RegisterExtension(value = 'tricks', botId = 'kbot')
 final class TricksExtension implements BotExtension {
     @Override
     void registerCommands(CommandManager manager, CommandClient client) {
-        new EvalCommand().tap {
-            client.addSlashCommand(it)
-            client.addCommand(it)
-        }
+        client.addDoubleCommand(new EvalCommand())
+
         // TODO slash command with modal for add trick
         client.addCommand(new AddTrickCommand())
 
         client.addSlashCommand(new TrickCommand())
 
-        Tricks.getTricks().forEach { tr ->
-            client.addCommand(new RunTrickCommand.Prefix(tr))
+        Tricks.getTricks().forEach { trick ->
+            client.addCommand(new RunTrickCommand.Prefix(trick))
         }
     }
 }

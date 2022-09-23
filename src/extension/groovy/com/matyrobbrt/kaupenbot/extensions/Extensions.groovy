@@ -63,6 +63,12 @@ class Extensions {
         event.getOption(name)?.asMember
     }
 
+    @Nullable
+    static TextChannel textChannel(final SlashCommandInteractionEvent event, final String name) {
+        final channel = event.getOption(name)?.asChannel
+        return channel?.type === ChannelType.TEXT ? channel.asTextChannel() : null
+    }
+
     static int integer(final SlashCommandInteractionEvent event, final String name, final int defaultValue = 1) {
         final opt = event.getOption(name)
         if (opt === null) return defaultValue

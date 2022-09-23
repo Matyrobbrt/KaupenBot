@@ -1,6 +1,7 @@
 package com.matyrobbrt.kaupenbot.extensions.moderation
 
 import com.jagrosh.jdautilities.command.CommandClient
+import com.matyrobbrt.kaupenbot.commands.moderation.SlowmodeCommand
 import com.matyrobbrt.kaupenbot.common.command.CommandManager
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
@@ -90,6 +91,8 @@ final class ModerationExtension implements BotExtension {
                 })
             }
         }
+
+        client.addDoubleCommand(new SlowmodeCommand())
     }
 
     static CompletableFuture<List<Message>> getMessages(MessageChannel channel, int amount) {

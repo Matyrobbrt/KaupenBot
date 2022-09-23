@@ -11,8 +11,6 @@ import org.codehaus.groovy.transform.AbstractASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
 import org.codehaus.groovy.transform.TransformWithPriority
 
-import static groovyjarjarasm.asm.Opcodes.*
-
 @CompileStatic
 @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
 final class ExtensionDiscoveryASTT extends AbstractASTTransformation implements TransformWithPriority {
@@ -26,10 +24,6 @@ final class ExtensionDiscoveryASTT extends AbstractASTTransformation implements 
         final object = nodes[1] as ClassNode
         final ctor = object.declaredConstructors.find() ?: object.addConstructor(Opcodes.ACC_PUBLIC, Parameter.EMPTY_ARRAY, ClassNode.EMPTY_ARRAY, GeneralUtils.block())
         extensions.computeIfAbsent(bid) { new ArrayList<>() }.add(new Ctor(ctor, object, getMemberStringValue(ann, 'value')))
-
-        if ((object.modifiers & (ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED)) == 0) {
-            object.modifiers = object.modifiers | Opcodes.ACC_PUBLIC
-        }
     }
 
     @Override

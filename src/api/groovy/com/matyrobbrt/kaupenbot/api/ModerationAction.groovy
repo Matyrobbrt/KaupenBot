@@ -120,17 +120,22 @@ enum ModerationActionType {
             parts.add(plural(days, 'day'))
         }
         int hours = duration.toHoursPart()
-        if (hours > 0 || parts.isEmpty()) {
+        if (hours > 0) {
             parts.add(plural(hours, 'hour'))
         }
         int minutes = duration.toMinutesPart()
-        if (minutes > 0 || parts.isEmpty()) {
+        if (minutes > 0) {
             parts.add(plural(minutes, 'minute'))
         }
         int seconds = duration.toSecondsPart()
-        if (seconds > 0 || parts.isEmpty()) {
+        if (seconds > 0) {
             parts.add(plural(seconds, 'second'))
         }
+
+        if (parts.isEmpty()) {
+            parts.add(plural(hours, 'hour'))
+        }
+
         return parts.join(', ')
     }
 

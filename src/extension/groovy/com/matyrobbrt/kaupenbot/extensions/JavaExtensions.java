@@ -1,5 +1,7 @@
 package com.matyrobbrt.kaupenbot.extensions;
 
+import com.jagrosh.jdautilities.command.CommandClient;
+import com.jagrosh.jdautilities.command.SlashCommand;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import groovy.transform.stc.ClosureParams;
@@ -36,5 +38,10 @@ public class JavaExtensions {
 
     public static <T> Predicate<T> notIn(Collection<T> self) {
         return obj -> !self.contains(obj);
+    }
+
+    public static void addDoubleCommand(CommandClient self, SlashCommand slashCommand) {
+        self.addCommand(slashCommand);
+        self.addSlashCommand(slashCommand);
     }
 }

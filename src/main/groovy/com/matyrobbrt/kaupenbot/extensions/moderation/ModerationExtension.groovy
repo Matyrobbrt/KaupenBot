@@ -1,6 +1,8 @@
 package com.matyrobbrt.kaupenbot.extensions.moderation
 
 import com.jagrosh.jdautilities.command.CommandClient
+import com.matyrobbrt.kaupenbot.commands.menus.ReportMessage
+import com.matyrobbrt.kaupenbot.commands.menus.ReportUser
 import com.matyrobbrt.kaupenbot.commands.moderation.LockdownCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.SlowmodeCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.UnlockdownCommand
@@ -98,6 +100,9 @@ final class ModerationExtension implements BotExtension {
 
         client.addDoubleCommand(new LockdownCommand())
         client.addDoubleCommand(new UnlockdownCommand())
+
+        client.addContextMenu(new ReportUser())
+        client.addContextMenu(new ReportMessage())
     }
 
     static CompletableFuture<List<Message>> getMessages(MessageChannel channel, int amount) {

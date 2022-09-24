@@ -4,6 +4,7 @@ import com.jagrosh.jdautilities.command.CommandClient
 import com.jagrosh.jdautilities.command.CommandClientBuilder
 import com.jagrosh.jdautilities.command.ContextMenu
 import com.jagrosh.jdautilities.command.SlashCommand
+import com.jagrosh.jdautilities.commons.waiter.EventWaiter
 import com.matyrobbrt.jdahelper.DismissListener
 import com.matyrobbrt.jdahelper.components.ComponentListener
 import com.matyrobbrt.jdahelper.components.storage.ComponentStorage
@@ -53,6 +54,7 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import javax.annotation.Nonnull
 import java.nio.file.Path
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
@@ -133,6 +135,9 @@ final class KaupenBot {
                 'database': database,
                 'jda': jda
         ])
+        extensions.forEachEnabled {
+            it.registerCommands(commands, client)
+        }
 
         jda.addEventListener(new DismissListener(), new ThreadListeners(), commands, client, components)
         jda.addEventListener(new ListenerAdapter() {
@@ -159,9 +164,13 @@ final class KaupenBot {
                 }
             })
 
-        extensions.forEachEnabled {
-            it.registerCommands(commands, client)
-        }
+        jda.registerWaiter(new EventWaiter(
+                Executors.newSingleThreadScheduledExecutor {
+                    final thread = new Thread(it, 'KBotEventWaiter')
+                    thread.daemon = true
+                    return thread
+                }, true
+        ))
 
         extensions.forEachEnabled { it.subscribeEvents(jda) }
 
@@ -271,14 +280,16 @@ class Config {
     @CompileStatic
     @ConfigSerializable
     static final class LoggingChannels {
-        long moderationLogs
-        long leaveJoinLogs
-        long messageLogs
+        long moderationLogs = 0
+        long leaveJoinLogs = 0
+        long messageLogs = 0
     }
     @CompileStatic
     @ConfigSerializable
     static final class Channels {
         List<Long> suggestionChannels = []
         List<Long> loggingIgnored = []
+
+        long reportChannel = 0
     }
 }

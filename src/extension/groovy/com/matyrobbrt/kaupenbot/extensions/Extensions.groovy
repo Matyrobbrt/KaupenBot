@@ -11,14 +11,18 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.entities.emoji.Emoji
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.interactions.callbacks.IModalCallback
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.components.ActionRow
+import net.dv8tion.jda.api.interactions.components.Modal
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.requests.restaction.interactions.ModalCallbackAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import org.codehaus.groovy.runtime.callsite.BooleanClosureWrapper
 import org.jetbrains.annotations.NotNull
@@ -28,6 +32,8 @@ import javax.annotation.Nullable
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
 
 @CompileStatic
 class Extensions {
@@ -96,6 +102,13 @@ class Extensions {
     }
     static ReplyCallbackAction replyEphemeral(IReplyCallback self, String message) {
         self.reply(message).setEphemeral(true)
+    }
+
+    private static final AtomicInteger MODALS = new AtomicInteger()
+    static ModalCallbackAction replyAndWaitModal(IModalCallback self, Modal.Builder modal, Consumer<ModalInteractionEvent> consumer) {
+        final id = "ModalNr${MODALS.getAndIncrement()}".toString()
+        EventWaiters.waiter(self.getJDA()).waitForEvent(ModalInteractionEvent, { it.modalId == id }, consumer)
+        self.replyModal(modal.setId(id).build())
     }
 
     /**

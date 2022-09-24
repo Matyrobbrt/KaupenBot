@@ -20,7 +20,7 @@ final class JoinsExtension implements BotExtension {
     @Override
     void subscribeEvents(JDA jda) {
         jda.subscribe(GuildMemberJoinEvent) {
-            final role = KaupenBot.jda.getRoleById(KaupenBot.config.joinRole)
+            final role = it.guild.getRoleById(KaupenBot.config.joinRole)
             if (role !== null) guild.addRoleToMember(member, role).reason('Join Role').queue()
 
             final log = getLogChannel(jda)

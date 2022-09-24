@@ -29,7 +29,7 @@ final class LockdownCommand extends SlashCommand {
     @Override
     protected void execute(SlashCommandEvent event) {
         final channel = event.messageChannel('channel') ?: event.channel.asGuildMessageChannel()
-        channel.sendMessage('Channel has been locked down by moderators.')
+        channel.sendMessage('Channel has been locked by moderators.')
             .flatMap { lockdownChannel(channel, "Lockdown issued by ${event.user.asTag}: ${event.user.id}")}
             .flatMap { event.replyEphemeral('Channel locked down!') }
             .queue()
@@ -38,7 +38,7 @@ final class LockdownCommand extends SlashCommand {
     @Override
     protected void execute(CommandEvent event) {
         final channel = (event.message.mentions.channels.find() ?: event.guildChannel) as GuildMessageChannel
-        channel.sendMessage('Channel has been locked down by moderators.')
+        channel.sendMessage('Channel has been locked by moderators.')
                 .flatMap { lockdownChannel(channel, "Lockdown issued by ${event.author.asTag}: ${event.author.id}")}
                 .flatMap({ channel.idLong !== event.channel.idLong }) { event.message.reply('Channel locked down!') }
                 .queue()
@@ -100,7 +100,7 @@ final class UnlockdownCommand extends SlashCommand {
     static RestAction unlockdownChannel(GuildChannel channel, String reason) {
         final old = KaupenBot.database.withExtension(LockdownsDAO) { it.get(channel.idLong) }
 
-        if (old === null || old.isEmpty()) {
+        if (old === null) {
             return channel.permissionContainer.manager.putRolePermissionOverride(
                     channel.guild.publicRole.idLong, [Permission.MESSAGE_SEND], null
             ).reason(reason)

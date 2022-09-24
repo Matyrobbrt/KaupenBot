@@ -11,6 +11,8 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -35,14 +37,13 @@ public interface LockdownsDAO extends Transactional<LockdownsDAO> {
         );
     }
 
+    @SqlUpdate("insert or replace into lockdowns(channelId, permissions) values (:ch, :perms)")
+    void insert(@Bind("ch") long channelId, @Bind("perms") String data);
+
     default void insert(long channelId, Map<PermissionOwner, PermissionData> data) {
-        useHandle(handle -> handle.createUpdate("insert or replace into lockdowns(channelId, permissions) values (:ch, :perms)")
-                .bind("ch", channelId)
-                .bind("perms", GSON.toJson(data.entrySet().stream().collect(Collectors.toMap(
-                        // TODO why is ID always 0?!
-                        it -> it.getKey().owner + ":" + it.getKey().type.name(), Map.Entry::getValue
-                ))))
-                .execute());
+        final Map<String, PermissionData> map = new LinkedHashMap<>();
+        data.forEach((key, val) -> map.put(key.owner + ":" + key.type.name(), val));
+        insert(channelId, GSON.toJson(map));
     }
 
     @SqlUpdate("delete from lockdowns where channelId = :ch")

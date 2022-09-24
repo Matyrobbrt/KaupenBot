@@ -99,7 +99,7 @@ final class RolePanelsExtension implements BotExtension {
                 autoCompleteOption('id') { current ->
                     replyChoiceStrings(KaupenBot.database.withExtension(RolePanelsDAO) { it.allIds }.findAll {
                         it.startsWith(current)
-                    }).checkAcknowledgement(delegate).queue()
+                    }).queue()
                 }
             }
 
@@ -152,7 +152,7 @@ final class RolePanelsExtension implements BotExtension {
                     autoCompleteOption('id') { current ->
                         replyChoiceStrings(KaupenBot.database.withExtension(RolePanelsDAO) { it.allIds }.findAll {
                             it.startsWith(current)
-                        }).checkAcknowledgement(delegate).queue()
+                        }).queue()
                     }
                 }
 
@@ -199,7 +199,7 @@ final class RolePanelsExtension implements BotExtension {
                     autoCompleteOption('id') { current ->
                         replyChoiceStrings(KaupenBot.database.withExtension(RolePanelsDAO) { it.allIds }.findAll {
                             it.startsWith(current)
-                        }).checkAcknowledgement(delegate).queue()
+                        }).queue()
                     }
                 }
             }

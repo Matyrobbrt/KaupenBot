@@ -10,8 +10,8 @@ import com.matyrobbrt.kaupenbot.modmail.ModMailListener
 import com.matyrobbrt.kaupenbot.modmail.db.TicketsDAO
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.entities.ChannelType
-import net.dv8tion.jda.api.entities.ThreadChannel
+import net.dv8tion.jda.api.entities.channel.ChannelType
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 

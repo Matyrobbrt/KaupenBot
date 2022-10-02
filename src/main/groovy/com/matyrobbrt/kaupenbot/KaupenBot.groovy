@@ -42,6 +42,8 @@ import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.localization.ResourceBundleLocalizationFunction
 import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.utils.MemberCachePolicy
+import net.dv8tion.jda.api.utils.cache.CacheFlag
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.jdbi.v3.core.Jdbi
@@ -124,6 +126,7 @@ final class KaupenBot {
         commandManager = commands
 
         jda = JDABuilder.createLight(token)
+                .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableIntents(BotConstants.INTENTS)
                 .setEventManager(new EventManagerWithFeedback())
                 .addEventListeners(new EvalCommand.ModalListener())

@@ -7,7 +7,7 @@ import com.jagrosh.jdautilities.command.UserContextMenu
 import com.jagrosh.jdautilities.command.UserContextMenuEvent
 import com.matyrobbrt.kaupenbot.KaupenBot
 import groovy.transform.CompileStatic
-import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.interactions.components.Modal
 import net.dv8tion.jda.api.interactions.components.text.TextInput

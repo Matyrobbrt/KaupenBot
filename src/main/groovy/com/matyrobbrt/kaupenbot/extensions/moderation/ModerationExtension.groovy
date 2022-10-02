@@ -12,7 +12,7 @@ import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
@@ -43,7 +43,8 @@ final class ModerationExtension implements BotExtension {
                 final days = integer('days', 1)
                 final user = member('user')
                 deferReply().queue()
-                user.ban(days, "Soft ban issued by ${it.user.asTag}: ${string('reason')}")
+                user.ban(days, TimeUnit.DAYS)
+                        .reason("Soft ban issued by ${it.user.asTag}: ${string('reason')}")
                         .delay(1, TimeUnit.SECONDS)
                         .flatMap { guild.unban(user) }
                         .flatMap { hook.editOriginal('✅ User has been successfully soft banned!') }

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 
 import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 @CompileStatic
 @ApiStatus.NonExtendable
@@ -146,7 +147,7 @@ enum ModerationActionType {
     AuditableRestAction<Void> apply(Member member, @Nullable Duration duration) {
         return switch (this) {
             case KICK -> member.kick()
-            case BAN -> member.ban(0)
+            case BAN -> member.ban(0, TimeUnit.DAYS)
             case TIMEOUT -> member.timeoutFor(duration)
         }
     }

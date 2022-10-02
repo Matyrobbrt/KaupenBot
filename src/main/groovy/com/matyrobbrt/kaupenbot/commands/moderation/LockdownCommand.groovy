@@ -7,9 +7,9 @@ import com.matyrobbrt.kaupenbot.KaupenBot
 import com.matyrobbrt.kaupenbot.db.LockdownsDAO
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.entities.GuildChannel
-import net.dv8tion.jda.api.entities.GuildMessageChannel
 import net.dv8tion.jda.api.entities.PermissionOverride
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.requests.RestAction

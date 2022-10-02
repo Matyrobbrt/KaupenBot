@@ -14,9 +14,9 @@ import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.xml.XmlParser
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.IWebhookContainer
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient

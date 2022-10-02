@@ -3,11 +3,9 @@ package com.matyrobbrt.kaupenbot.common.util.webhooks
 import club.minnced.discord.webhook.external.JDAWebhookClient
 import club.minnced.discord.webhook.send.AllowedMentions
 import groovy.transform.CompileStatic
-import groovy.transform.PackageScope
-import groovy.transform.PackageScopeTarget
-import net.dv8tion.jda.api.entities.IWebhookContainer
-import net.dv8tion.jda.api.entities.ThreadChannel
 import net.dv8tion.jda.api.entities.Webhook
+import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
 import okhttp3.OkHttpClient
 import org.jetbrains.annotations.Nullable
 

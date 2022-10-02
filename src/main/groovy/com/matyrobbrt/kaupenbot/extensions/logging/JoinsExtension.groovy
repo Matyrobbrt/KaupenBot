@@ -7,7 +7,7 @@ import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.IMentionable
-import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import net.dv8tion.jda.api.utils.TimeFormat
@@ -38,6 +38,7 @@ final class JoinsExtension implements BotExtension {
             }
         }
         jda.subscribe(GuildMemberRemoveEvent) {
+            if (it.member === null) return
             final log = getLogChannel(jda)
             if (log !== null) {
                 final embed = new EmbedBuilder()

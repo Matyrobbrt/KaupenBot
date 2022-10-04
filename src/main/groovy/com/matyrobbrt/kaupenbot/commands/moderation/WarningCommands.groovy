@@ -11,6 +11,7 @@ import com.matyrobbrt.kaupenbot.api.plugins.WarningsPlugin
 import com.matyrobbrt.kaupenbot.api.util.Warning
 import com.matyrobbrt.kaupenbot.db.WarningMapper
 import com.matyrobbrt.kaupenbot.db.WarningsDAO
+import com.matyrobbrt.kaupenbot.extensions.logging.ModLogs
 import com.matyrobbrt.kaupenbot.util.CallbackCommand
 import com.matyrobbrt.kaupenbot.common.command.PaginatedSlashCommand
 import groovy.transform.CompileStatic
@@ -18,6 +19,7 @@ import groovy.transform.PackageScope
 import groovy.transform.PackageScopeTarget
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.audit.ActionType
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -81,10 +83,7 @@ final class WarnCommand extends Command {
     @Override
     protected void execute(CommandEvent event) {
         final split = event.args.split(' ')
-        final toWarn = event.message.mentions.users.isEmpty() ?
-                event.getJDA().retrieveUserById(split[0])
-                .submit(false).get() :
-                event.message.mentions.users[0]
+        final toWarn = event.message.mentionedUser(split)
         final reason = split.drop(1).join(' ')
 
         if (toWarn.getIdLong() == event.getMember().getIdLong()) {
@@ -305,7 +304,6 @@ static void logWarning(Guild guild, User warnedUser, UUID warnId, Member moderat
                     appendDescription('\n*User could not be messaged.*')
                 }
             }).queue()
-
 }
 /**
  * @param warning if {@code null}, all warnings were cleared
@@ -361,6 +359,13 @@ static void onButton(final ButtonInteractionContext context) {
         context.replyProhibited("There no longer is a punishment configured for reaching $warningNumber warnings.").queue()
         return
     }
+
+    ModLogs.putData(
+            action.type.auditType(),
+            userId as long,
+            context.member.idLong,
+            "Reached warning number $warningNumber: $warnId"
+    )
 
     context.guild.retrieveMember(UserSnowflake.fromId(userId))
         .flatMap { action.type.apply(it, action.duration)

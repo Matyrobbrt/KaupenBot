@@ -102,7 +102,7 @@ class Extensions {
     }
 
     static ReplyCallbackAction replyProhibited(IReplyCallback self, String message) {
-        self.reply("⛔ $message").setEphemeral(true)
+        self.reply("🚫 $message").setEphemeral(true)
     }
     static ReplyCallbackAction replyEphemeral(IReplyCallback self, String message) {
         self.reply(message).setEphemeral(true)
@@ -153,6 +153,13 @@ class Extensions {
                 self.getGuildById(it.guildId())?.getChannelById(MessageChannel, it.channelId())?.retrieveMessageById(it.messageId())
             }
             .orElse(null)
+    }
+
+    static User mentionedUser(Message self, String[] split) {
+        self.mentions.users.isEmpty() ?
+            self.getJDA().retrieveUserById(split[0])
+                    .submit(false).get() :
+            self.mentions.users[0]
     }
 
     static void reply(HttpExchange exchange, String message, int code) throws IOException {

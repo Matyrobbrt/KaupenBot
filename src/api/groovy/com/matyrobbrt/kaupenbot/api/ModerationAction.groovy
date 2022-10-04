@@ -5,6 +5,7 @@ import groovy.transform.PackageScope
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 import groovy.transform.stc.POJO
+import net.dv8tion.jda.api.audit.ActionType
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
@@ -90,15 +91,17 @@ abstract class ModerationAction<CONTEXT> {
 @POJO
 @CompileStatic
 enum ModerationActionType {
-    KICK('👢'),
-    TIMEOUT('🔇'),
-    BAN('🔨')
+    KICK('👢', ActionType.KICK),
+    TIMEOUT('🔇', ActionType.MEMBER_UPDATE),
+    BAN('🔨', ActionType.BAN)
 
-    ModerationActionType(String emoji) {
+    ModerationActionType(String emoji, ActionType auditType) {
         this.emoji = emoji
+        this.auditType = auditType
     }
 
     final String emoji
+    final ActionType auditType
 
     // TODO duration for bans as well?
     boolean supportsDuration() {
@@ -112,6 +115,10 @@ enum ModerationActionType {
             case TIMEOUT -> "Timeout for ${formatDuration(duration)}"
         }
         return emoji + ' ' + text
+    }
+
+    ActionType auditType() {
+        return this.auditType
     }
 
     static String formatDuration(Duration duration) {

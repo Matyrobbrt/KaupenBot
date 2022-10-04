@@ -3,7 +3,10 @@ package com.matyrobbrt.kaupenbot.extensions.moderation
 import com.jagrosh.jdautilities.command.CommandClient
 import com.matyrobbrt.kaupenbot.commands.menus.ReportMessage
 import com.matyrobbrt.kaupenbot.commands.menus.ReportUser
+import com.matyrobbrt.kaupenbot.commands.moderation.BanCommand
+import com.matyrobbrt.kaupenbot.commands.moderation.KickCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.LockdownCommand
+import com.matyrobbrt.kaupenbot.commands.moderation.MuteCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.SlowmodeCommand
 import com.matyrobbrt.kaupenbot.commands.moderation.UnlockdownCommand
 import com.matyrobbrt.kaupenbot.common.command.CommandManager
@@ -12,8 +15,8 @@ import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
 import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.requests.RestAction
@@ -101,6 +104,10 @@ final class ModerationExtension implements BotExtension {
 
         client.addDoubleCommand(new LockdownCommand())
         client.addDoubleCommand(new UnlockdownCommand())
+
+        client.addDoubleCommand(new BanCommand())
+        client.addDoubleCommand(new KickCommand())
+        client.addDoubleCommand(new MuteCommand())
 
         client.addContextMenu(new ReportUser())
         client.addContextMenu(new ReportMessage())

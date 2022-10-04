@@ -28,25 +28,43 @@ final class KickCommand extends SlashCommand {
         final reason = event.string('reason')
         final user = event.member('user')
 
-        ModLogs.putData(ActionType.BAN, user.idLong, event.user.idLong, reason)
-        user.kick()
-            .reason("Kick issued by ${event.user.id}: $reason")
-            .flatMap { event.reply("👢 Kicked `${user.user.asTag}`.\n**Reason**: $reason") }
-            .queue()
+        final toRun = { boolean didDm ->
+            ModLogs.putData(ActionType.BAN, user.idLong, event.user.idLong, reason)
+            user.kick()
+                    .reason("Kick issued by ${event.user.id}: $reason")
+                    .flatMap {
+                        final action = event.reply("👢 Kicked `${user.user.asTag}`.\n**Reason**: $reason")
+                        if (!didDm) action.addContent('\n*User could not be messaged!*')
+                        return action
+                    }
+                    .queue()
+        }
+        user.user.openPrivateChannel()
+                .flatMap { it.sendMessage("You have been 👢 **kicked** in **${event.guild.name}!\n**Reason**: $reason") }
+                .queue({ toRun(true) }, { toRun(false) })
     }
 
     @Override
     protected void execute(CommandEvent event) {
         final split = event.args.split(' ')
-        final toBan = event.message.mentionedUser(split)
+        final toKick = event.message.mentionedUser(split)
         final reason = split.drop(1).join(' ')
 
-        ModLogs.putData(ActionType.BAN, toBan.idLong, event.author.idLong, reason)
-        event.guild.retrieveMemberById(toBan.idLong)
-            .flatMap {
-                it.kick().reason("Kick issued by ${event.author.id}: $reason")
-            }
-            .flatMap { event.reply("👢 Kicked `${toBan.asTag}`.\n**Reason**: $reason") }
-            .queue()
+        final toRun = { boolean didDm ->
+            ModLogs.putData(ActionType.BAN, toKick.idLong, event.author.idLong, reason)
+            event.guild.retrieveMemberById(toKick.idLong)
+                    .flatMap {
+                        it.kick().reason("Kick issued by ${event.author.id}: $reason")
+                    }
+                    .flatMap {
+                        final action = event.message.reply("👢 Kicked `${toKick.asTag}`.\n**Reason**: $reason")
+                        if (!didDm) action.addContent('\n*User could not be messaged!*')
+                        return action
+                    }
+                    .queue()
+        }
+        toKick.openPrivateChannel()
+                .flatMap { it.sendMessage("You have been 👢 **kicked** in **${event.guild.name}!\n**Reason**: $reason") }
+                .queue({ toRun(true) }, { toRun(false) })
     }
 }

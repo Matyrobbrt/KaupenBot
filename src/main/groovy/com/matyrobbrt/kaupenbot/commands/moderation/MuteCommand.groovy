@@ -11,8 +11,9 @@ import net.dv8tion.jda.api.audit.ActionType
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.utils.TimeFormat
 
-import java.time.Duration
+import java.time.Instant
 
 // TODO hierarchy checks
 @CompileStatic
@@ -38,17 +39,26 @@ final class MuteCommand extends SlashCommand {
             return
         }
 
-        ModLogs.putData(ActionType.MEMBER_UPDATE, user.idLong, event.user.idLong, reason)
-        user.timeoutFor(duration)
-            .reason("Mute issued by ${event.user.id}: $reason")
-            .flatMap { event.reply("🔇 Muted `${user.user.asTag}`.\n**Reason**: $reason") }
-            .queue()
+        final toRun = { boolean didDm ->
+            ModLogs.putData(ActionType.MEMBER_UPDATE, user.idLong, event.user.idLong, reason)
+            user.timeoutFor(duration)
+                    .reason("Mute issued by ${event.user.id}: $reason")
+                    .flatMap {
+                        final action = event.reply("🔇 Muted `${user.user.asTag}`.\n**Reason**: $reason")
+                        if (!didDm) action.addContent('\n*User could not be messaged!*')
+                        return action
+                    }
+                    .queue()
+        }
+        user.user.openPrivateChannel()
+                .flatMap { it.sendMessage("You have been 🔇 **muted** in **${event.guild.name}!\n**Reason**: $reason\n**Timeout end**: ${TimeFormat.RELATIVE.format(Instant.now() + duration)}") }
+                .queue({ toRun(true) }, { toRun(false) })
     }
 
     @Override
     protected void execute(CommandEvent event) {
         final split = event.args.split(' ')
-        final toBan = event.message.mentionedUser(split)
+        final toMute = event.message.mentionedUser(split)
         final duration = TimeUtils.getDurationFromInput(split[1])
         if (duration.toHours() > Member.MAX_TIME_OUT_LENGTH * 24) {
             event.message.reply('🚫 Cannot time out for more than 28 days!').queue()
@@ -57,12 +67,22 @@ final class MuteCommand extends SlashCommand {
 
         final reason = split.drop(2).join(' ')
 
-        ModLogs.putData(ActionType.MEMBER_UPDATE, toBan.idLong, event.author.idLong, reason)
-        event.guild.retrieveMemberById(toBan.idLong)
-            .flatMap {
-                it.timeoutFor(duration).reason("Mute issued by ${event.author.id}: $reason")
-            }
-            .flatMap { event.reply("🔇 Muted `${toBan.asTag}`.\n**Reason**: $reason") }
-            .queue()
+        final toRun = { boolean didDm ->
+            ModLogs.putData(ActionType.MEMBER_UPDATE, toMute.idLong, event.author.idLong, reason)
+            event.guild.retrieveMemberById(toMute.idLong)
+                    .flatMap {
+                        it.timeoutFor(duration).reason("Mute issued by ${event.author.id}: $reason")
+                    }
+                    .flatMap {
+                        final action = event.message.reply("🔇 Muted `${toMute.asTag}`.\n**Reason**: $reason")
+                        if (!didDm) action.addContent('\n*User could not be messaged!*')
+                        return action
+                    }
+                    .queue()
+        }
+
+        toMute.openPrivateChannel()
+                .flatMap { it.sendMessage("You have been 🔇 **muted** in **${event.guild.name}!\n**Reason**: $reason\n**Timeout end**: ${TimeFormat.RELATIVE.format(Instant.now() + duration)}") }
+                .queue({ toRun(true) }, { toRun(false) })
     }
 }

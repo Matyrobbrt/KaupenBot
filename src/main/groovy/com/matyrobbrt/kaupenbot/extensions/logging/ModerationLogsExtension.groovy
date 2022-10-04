@@ -20,6 +20,8 @@ import net.dv8tion.jda.api.utils.TimeFormat
 
 import java.awt.*
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.function.Consumer
 import java.util.function.UnaryOperator
@@ -30,7 +32,7 @@ final class ModerationLogsExtension implements BotExtension {
     @Override
     void subscribeEvents(JDA jda) {
         jda.subscribe(GuildMemberUpdateTimeOutEvent) { GuildMemberUpdateTimeOutEvent event ->
-            if (event.oldTimeOutEnd === null && event.newTimeOutEnd !== null) {
+            if ((event.oldTimeOutEnd === null || event.oldTimeOutEnd.isBefore(OffsetDateTime.now())) && event.newTimeOutEnd !== null) {
                 // Somebody was timed out
                 final ActionData data = ModLogs.getData(ActionType.MEMBER_UPDATE, event.user.idLong)
                 if (data === null) {

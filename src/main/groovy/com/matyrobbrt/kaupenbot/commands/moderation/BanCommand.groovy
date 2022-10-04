@@ -34,11 +34,20 @@ final class BanCommand extends SlashCommand {
         final user = event.member('user')
         final Duration deletion = TimeUtils.getDurationFromInput(event.string('deletion', '0d'))
 
-        ModLogs.putData(ActionType.BAN, user.idLong, event.user.idLong, reason)
-        user.ban(deletion.toSeconds() as int, TimeUnit.SECONDS)
-            .reason("Ban issued by ${event.user.id}: $reason")
-            .flatMap { event.reply("🔨 Banned `${user.user.asTag}`.\n**Reason**: $reason") }
-            .queue()
+        final Closure toRun = { boolean didDm ->
+            ModLogs.putData(ActionType.BAN, user.idLong, event.user.idLong, reason)
+            user.ban(deletion.toSeconds() as int, TimeUnit.SECONDS)
+                    .reason("Ban issued by ${event.user.id}: $reason")
+                    .flatMap {
+                        final action = event.reply("🔨 Banned `${user.user.asTag}`.\n**Reason**: $reason")
+                        if (!didDm) action.addContent('\n*User could not be messaged!*')
+                        return action
+                    }
+                    .queue()
+        }
+        user.user.openPrivateChannel()
+            .flatMap { it.sendMessage("You have been 🔨 **banned** in **${event.guild.name}!\n**Reason**: $reason") }
+            .queue({ toRun(true) }, { toRun(false) })
     }
 
     @Override
@@ -47,13 +56,23 @@ final class BanCommand extends SlashCommand {
         final toBan = event.message.mentionedUser(split)
         final reason = split.drop(1).join(' ')
 
-        ModLogs.putData(ActionType.BAN, toBan.idLong, event.author.idLong, reason)
-        event.guild.retrieveMemberById(toBan.idLong)
-            .flatMap {
-                it.ban(0, TimeUnit.DAYS)
-                    .reason("Ban issued by ${event.author.id}: $reason")
-            }
-            .flatMap { event.reply("🔨 Banned `${toBan.asTag}`.\n**Reason**: $reason") }
-            .queue()
+        final toRun = { boolean didDm ->
+            ModLogs.putData(ActionType.BAN, toBan.idLong, event.author.idLong, reason)
+            event.guild.retrieveMemberById(toBan.idLong)
+                    .flatMap {
+                        it.ban(0, TimeUnit.DAYS)
+                                .reason("Ban issued by ${event.author.id}: $reason")
+                    }
+                    .flatMap {
+                        final action = event.message.reply("🔨 Banned `${toBan.asTag}`.\n**Reason**: $reason")
+                        if (!didDm) action.addContent('\n*User could not be messaged!*')
+                        return action
+                    }
+                    .queue()
+        }
+
+        toBan.openPrivateChannel()
+                .flatMap { it.sendMessage("You have been 🔨 **banned** in **${event.guild.name}!\n**Reason**: $reason") }
+                .queue({ toRun(true) }, { toRun(false) })
     }
 }

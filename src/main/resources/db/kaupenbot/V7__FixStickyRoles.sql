@@ -1,0 +1,1 @@
+alter table sticky_roles add guild_id unsigned big int not null;

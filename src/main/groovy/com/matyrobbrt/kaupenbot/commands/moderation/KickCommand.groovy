@@ -29,7 +29,7 @@ final class KickCommand extends SlashCommand {
         final user = event.member('user')
 
         final toRun = { boolean didDm ->
-            ModLogs.putData(ActionType.BAN, user.idLong, event.user.idLong, reason)
+            ModLogs.putData(ActionType.KICK, user.idLong, event.user.idLong, reason)
             user.kick()
                     .reason("Kick issued by ${event.user.id}: $reason")
                     .flatMap {
@@ -51,7 +51,7 @@ final class KickCommand extends SlashCommand {
         final reason = split.drop(1).join(' ')
 
         final toRun = { boolean didDm ->
-            ModLogs.putData(ActionType.BAN, toKick.idLong, event.author.idLong, reason)
+            ModLogs.putData(ActionType.KICK, toKick.idLong, event.author.idLong, reason)
             event.guild.retrieveMemberById(toKick.idLong)
                     .flatMap {
                         it.kick().reason("Kick issued by ${event.author.id}: $reason")

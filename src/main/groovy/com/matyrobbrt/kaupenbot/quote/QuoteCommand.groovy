@@ -205,9 +205,9 @@ final class ListCommand extends PaginatedSlashCommand {
             }
 
             // Get the current Quote
-            Quote fetchedQuote = Quotes.getQuote(guildId, x);
+            Quote fetchedQuote = Quotes.getQuote(guildId, x)
 
-            embed.appendDescription("**${x}**: ")
+            embed.appendDescription("**${x + 1}**: ")
             if (fetchedQuote == Quotes.NULL || fetchedQuote == null) {
                 embed.appendDescription('Quote does not exist.')
             } else {
@@ -247,7 +247,7 @@ final class RemoveCommand extends SlashCommand {
             event.replyProhibited('You cannot remove this quote!').queue()
             return
         }
-        Quotes.removeQuote(event.getGuild().getIdLong(), index)
+        Quotes.removeQuote(event.getGuild().getIdLong(), index - 1)
         event.reply("Quote $index removed.").mentionRepliedUser(false).queue()
     }
 }

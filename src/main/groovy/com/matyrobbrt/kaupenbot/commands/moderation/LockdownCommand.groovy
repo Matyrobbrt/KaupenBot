@@ -64,8 +64,8 @@ final class LockdownCommand extends SlashCommand {
             db.insert(channel.idLong, data)
         }
         return channel.permissionContainer.manager
-                .putMemberPermissionOverride(channel.guild.selfMember.idLong, [Permission.MANAGE_PERMISSIONS, Permission.MANAGE_CHANNEL], null)
-                .putRolePermissionOverride(KaupenBot.config.moderatorRole, [Permission.MANAGE_CHANNEL, Permission.MANAGE_PERMISSIONS], null)
+                .putMemberPermissionOverride(channel.guild.selfMember.idLong, [Permission.MANAGE_CHANNEL], null)
+                .putRolePermissionOverride(KaupenBot.config.moderatorRole, [Permission.MANAGE_CHANNEL], null)
                 .flatMap {
                     RestAction.allOf(toModify.stream()
                             .map { it.manager.deny(Permission.MESSAGE_SEND).reason(reason) }

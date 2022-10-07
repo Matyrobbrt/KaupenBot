@@ -152,7 +152,7 @@ final class ListCommand extends PaginatedSlashCommand {
         super(KaupenBot.paginator('list-quotes-cmd')
                 .itemsPerPage(10)
                 .dismissible(true)
-                .buttonsOwnerOnly(false)
+                .buttonsOwnerOnly(true)
                 .lifespan(Component.Lifespan.TEMPORARY)
                 .buttonFactory(
                         Paginator.DEFAULT_BUTTON_FACTORY.with(Paginator.ButtonType.DISMISS, id -> Button.secondary(id, Emoji.fromUnicode('\uD83D\uDEAE')))

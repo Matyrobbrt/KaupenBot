@@ -63,9 +63,14 @@ final class LockdownCommand extends SlashCommand {
         KaupenBot.database.useExtension(LockdownsDAO) { LockdownsDAO db ->
             db.insert(channel.idLong, data)
         }
-        return RestAction.allOf(toModify.stream()
-            .map { it.manager.deny(Permission.MESSAGE_SEND).reason(reason) }
-            .toList())
+        return channel.permissionContainer.manager
+                .putMemberPermissionOverride(channel.guild.selfMember.idLong, [Permission.MANAGE_PERMISSIONS, Permission.MANAGE_CHANNEL], null)
+                .putRolePermissionOverride(KaupenBot.config.moderatorRole, [Permission.MANAGE_CHANNEL, Permission.MANAGE_PERMISSIONS], null)
+                .flatMap {
+                    RestAction.allOf(toModify.stream()
+                            .map { it.manager.deny(Permission.MESSAGE_SEND).reason(reason) }
+                            .toList())
+                }
     }
 }
 

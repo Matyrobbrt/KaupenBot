@@ -34,6 +34,8 @@ final class StickyRolesExtension implements BotExtension {
         }
 
         jda.subscribe(GuildMemberRemoveEvent) { GuildMemberRemoveEvent event ->
+            if (event.user === null || event.member === null) return
+
             KaupenBot.database.useExtension(StickyRolesDAO, db -> {
                 final long joinRole = KaupenBot.config.joinRole
                 db.clear(event.getUser().getIdLong(), event.getGuild().getIdLong())

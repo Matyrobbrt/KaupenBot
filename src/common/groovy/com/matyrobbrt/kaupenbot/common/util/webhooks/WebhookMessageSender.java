@@ -39,6 +39,14 @@ public class WebhookMessageSender {
                 .build());
     }
 
+    public static CompletableFuture<ReadonlyMessage> send(WebhookClient client, String message, List<Attachment> attachments) {
+        final var msg = new WebhookMessageBuilder()
+                .setContent(message)
+                .setAllowedMentions(AllowedMentions.none());
+        attachments.forEach(attachment -> msg.addFile(attachment.name, attachment.data));
+        return client.send(msg.build());
+    }
+
     public static CompletableFuture<ReadonlyMessage> send(WebhookClient client, @Nullable MessageEmbed embed, String username, String avatar, Attachment... attachments) {
         final var message = new WebhookMessageBuilder()
                 .setAvatarUrl(avatar)

@@ -43,6 +43,7 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.localization.ResourceBundleLocalizationFunction
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.utils.MemberCachePolicy
+import net.dv8tion.jda.api.utils.cache.CacheFlag
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.jdbi.v3.core.Jdbi
@@ -56,6 +57,7 @@ import javax.annotation.Nonnull
 import java.nio.file.Path
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
@@ -72,6 +74,7 @@ final class KaupenBot {
     }
 
     public static final Logger log = LoggerFactory.get()
+    public static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(2) { new Thread(it, 'Scheduled Executor').tap { it.setDaemon(true) }}
 
     static PluginRegistry plugins
     static Jdbi database
@@ -129,6 +132,7 @@ final class KaupenBot {
                 .enableIntents(BotConstants.INTENTS)
                 .setEventManager(new EventManagerWithFeedback())
                 .addEventListeners(new EvalCommand.ModalListener())
+                .enableCache(CacheFlag.FORUM_TAGS)
                 .build()
 
         final extensions = new ExtensionManager(config.disabledExtensions.notIn())
@@ -292,6 +296,7 @@ class Config {
     static final class Channels {
         List<Long> suggestionChannels = []
         List<Long> loggingIgnored = []
+        List<Long> helpChannels = []
 
         long reportChannel = 0
     }

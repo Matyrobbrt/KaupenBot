@@ -16,8 +16,8 @@ import java.util.function.Predicate
 
 @CompileStatic
 abstract class WebhookManager {
-    static WebhookManager of(String name, AllowedMentions mentions = AllowedMentions.none()) {
-        return of(e -> e.trim() == name, name, mentions)
+    static WebhookManager of(String name, AllowedMentions mentions = AllowedMentions.none(), @Nullable Consumer<Webhook> creationListener = null) {
+        return of(e -> e.trim() == name, name, mentions, creationListener)
     }
 
     static WebhookManager of(Predicate<String> matcher, String webhookName, AllowedMentions allowedMentions, @Nullable Consumer<Webhook> creationListener) {
@@ -111,7 +111,7 @@ final class WebhookManagerImpl extends WebhookManager {
     @Override
     JDAWebhookClient getWebhook(ThreadChannel thread) {
         webhooks.computeIfAbsent(thread.idLong) {
-            create(getOrCreateWebhook(thread.parentMessageChannel.asTextChannel())).onThread(thread.idLong)
+            create(getOrCreateWebhook((IWebhookContainer)thread.parentChannel)).onThread(thread.idLong)
         }
     }
 

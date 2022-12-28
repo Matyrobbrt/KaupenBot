@@ -69,7 +69,7 @@ class ChannelMirrorExtension implements BotExtension {
     @Override
     void subscribeEvents(JDA jda) {
         jda.subscribe(MessageReceivedEvent) {
-            if (!it.fromGuild || it.message.author.bot) return
+            if (!it.fromGuild || it.message.author.bot || it.message.author.system) return
 
             final mirror = channelToMirror.get(it.channel)
             if (mirror !== null) {
@@ -79,7 +79,7 @@ class ChannelMirrorExtension implements BotExtension {
                 }.exceptionHandling()
             } else {
                 final parent = channelToMirror.getKey(it.channel)
-                if (parent !== null) {
+                if (parent !== null && !it.message.contentRaw.startsWith('\\')) {
                     final action = parent.sendMessage(new MessageCreateBuilder().applyMessage(it.message).setFiles(it.message.attachments
                             .stream().map { FileUpload.fromData(WebhookMessageSender.readBytes(it), it.fileName) }.toList()).build())
                     if (it.message.messageReference !== null) {

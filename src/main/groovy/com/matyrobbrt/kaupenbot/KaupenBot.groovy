@@ -296,7 +296,9 @@ class Config {
     static final class Channels {
         List<Long> suggestionChannels = []
         List<Long> loggingIgnored = []
+
         List<Long> helpChannels = []
+        long programmingHelpChannel = 0
 
         long reportChannel = 0
     }

@@ -60,6 +60,17 @@ When you have received an answer that satisfies you, make sure to thank everyone
             final ThreadChannel thread = it.channel.asThreadChannel()
             if (thread.parentChannel.idLong !in KaupenBot.config.channels.helpChannels) return
 
+            if (thread.parentChannel.idLong === KaupenBot.config.channels.programmingHelpChannel) {
+                if (thread.appliedTags.stream().anyMatch {
+                    it.name.equalsIgnoreCase('minecraft')
+                }) {
+                    thread.sendMessage('This channel is not for Minecraft support! Get the roles you need from <#858641026747334666> and ask in the relevant channels!')
+                            .flatMap { thread.manager.setLocked(true).setArchived(true) }
+                            .queue()
+                    return
+                }
+            }
+
             if (thread.appliedTags.stream().noneMatch {
                 it.name.startsWith('Version:') || it.name.startsWith('1.1')
             } && thread.parentChannel.asForumChannel().availableTags.stream().anyMatch {

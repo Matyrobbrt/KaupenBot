@@ -198,7 +198,7 @@ final class YoutubeWebhookManager {
 
                     @Override
                     void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-
+                        response.close()
                     }
                 })
     }

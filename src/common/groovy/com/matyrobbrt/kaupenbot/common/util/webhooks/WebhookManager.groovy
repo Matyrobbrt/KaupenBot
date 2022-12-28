@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.entities.Webhook
 import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import okhttp3.OkHttpClient
 import org.jetbrains.annotations.Nullable
 
@@ -34,6 +35,7 @@ abstract class WebhookManager {
      * @return the webhook
      */
     abstract JDAWebhookClient getWebhook(IWebhookContainer channel)
+
     /**
      * Gets or creates the webhook client for a given {@code thread}.
      *
@@ -42,11 +44,22 @@ abstract class WebhookManager {
      */
     abstract JDAWebhookClient getWebhook(ThreadChannel thread)
 
+    JDAWebhookClient getWebhook(MessageChannel channel) {
+        return switch (channel) {
+            case IWebhookContainer -> getWebhook((IWebhookContainer)channel)
+            case ThreadChannel -> getWebhook((ThreadChannel)channel)
+            default -> null
+        }
+    }
+
     JDAWebhookClient getAt(IWebhookContainer channel) {
         getWebhook(channel)
     }
     JDAWebhookClient getAt(ThreadChannel thread) {
         getWebhook(thread)
+    }
+    JDAWebhookClient getAt(MessageChannel channel) {
+        getWebhook(channel)
     }
 }
 
@@ -65,7 +78,10 @@ final class WebhookManagerImpl extends WebhookManager {
         if (executor == null) {
             executor = Executors.newScheduledThreadPool(Math.max(MANAGERS.size() / 3 as int, 1) as int, r -> new Thread(r, "Webhooks").tap { it.daemon = true })
             // Clear webhooks after 6 hours to refresh them
-            getExecutor().scheduleAtFixedRate(() -> MANAGERS.forEach(it -> it.webhooks.clear()), 1, 6, TimeUnit.HOURS)
+            getExecutor().scheduleAtFixedRate(() -> MANAGERS.forEach(it -> {
+                it.close()
+                it.webhooks.clear()
+            }), 1, 6, TimeUnit.HOURS)
         }
         return executor
     }

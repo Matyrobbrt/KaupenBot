@@ -36,14 +36,13 @@ import groovy.transform.stc.POJO
 import io.github.cdimascio.dotenv.Dotenv
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
-import net.dv8tion.jda.api.events.ReadyEvent
+import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.localization.ResourceBundleLocalizationFunction
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.utils.MemberCachePolicy
-import net.dv8tion.jda.api.utils.cache.CacheFlag
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.jdbi.v3.core.Jdbi
@@ -224,7 +223,8 @@ final class BotConstants {
     static final List<GatewayIntent> INTENTS = [
             GatewayIntent.GUILD_MEMBERS,
             GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT,
-            GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_BANS
+            GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_BANS,
+            GatewayIntent.GUILD_MESSAGE_REACTIONS
     ]
 
     @Newify(pattern = '[A-z][A-Za-z0-9_]*')

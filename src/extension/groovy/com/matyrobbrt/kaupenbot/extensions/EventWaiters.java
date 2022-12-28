@@ -14,5 +14,5 @@ public final class EventWaiters {
         self.addEventListener(waiter);
     }
 
-    public static EventWaiter waiter(JDA self) { return WAITERS.get(self); }
+    public static EventWaiter getWaiter(JDA self) { return WAITERS.get(self); }
 }

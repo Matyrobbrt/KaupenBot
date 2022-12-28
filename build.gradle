@@ -6,6 +6,7 @@ plugins {
 }
 repositories {
     mavenCentral()
+    mavenLocal()
     maven { url "https://m2.chew.pro/snapshots" }
 }
 
@@ -91,6 +92,8 @@ dependencies {
     commonCompileClasspath 'net.sf.trove4j:trove4j:3.0.3'
     modmailCompileClasspath 'net.sf.trove4j:trove4j:3.0.3'
     extensionCompileClasspath 'net.sf.trove4j:trove4j:3.0.3'
+
+    implementation 'com.google.code.findbugs:annotations:3.0.1'
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)

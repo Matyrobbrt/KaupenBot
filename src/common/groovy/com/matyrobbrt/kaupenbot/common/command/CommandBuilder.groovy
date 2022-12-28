@@ -40,6 +40,10 @@ sealed class CommandBuilder permits PaginatedCommandBuilder {
         requiredPermissions.add(permission)
     }
 
+    void setRequire(Permission permission) {
+        requiredPermissions.add(permission)
+    }
+
     void checkIf(Predicate<SlashCommandInteractionEvent> predicate, String failureMessage = null) {
         predicates.add(com.matyrobbrt.kaupenbot.common.util.JavaCalls.slashPredicate(predicate, failureMessage))
     }

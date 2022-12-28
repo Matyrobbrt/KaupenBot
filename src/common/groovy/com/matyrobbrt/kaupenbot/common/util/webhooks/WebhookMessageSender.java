@@ -51,6 +51,16 @@ public class WebhookMessageSender {
         }
         return client.send(message.build());
     }
+
+    public static CompletableFuture<ReadonlyMessage> proxy(WebhookClient client, Message message) {
+        final var builder = new WebhookMessageBuilder()
+                .setAvatarUrl(message.getAuthor().getEffectiveAvatarUrl())
+                .setUsername(message.getAuthor().getName())
+                .setContent(message.getContentRaw());
+        message.getAttachments().forEach(attachment -> builder.addFile(attachment.getFileName(), readBytes(attachment)));
+        return client.send(builder.build());
+    }
+
     public static JDAWebhookClient create(Webhook webhook, ScheduledExecutorService executor, OkHttpClient httpClient, AllowedMentions allowedMentions) {
         return WebhookClientBuilder.fromJDA(webhook)
                 .setExecutorService(executor)
@@ -59,15 +69,17 @@ public class WebhookMessageSender {
                 .buildJDA();
     }
 
+    public static byte[] readBytes(Message.Attachment attachment) {
+        try (final var is = attachment.getProxy().download().get()) {
+            return is.readAllBytes();
+        } catch (Exception exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
     public record Attachment(String name, byte[] data) {
         public static Attachment[] from(List<Message.Attachment> attachments) {
-            return attachments.stream().map(it -> {
-                try (final var is = it.getProxy().download().get()) {
-                    return new Attachment(it.getFileName(), is.readAllBytes());
-                } catch (Exception exception) {
-                    throw new RuntimeException(exception);
-                }
-            }).toArray(Attachment[]::new);
+            return attachments.stream().map(it -> new Attachment(it.getFileName(), readBytes(it))).toArray(Attachment[]::new);
         }
     }
 }

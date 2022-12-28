@@ -83,10 +83,10 @@ final class CommandManagerImpl implements EventListener, CommandManager {
             }) as Consumer<CommandAutoCompleteInteractionEvent>)
         }
         command.subcommands.each {
-            recursivelyListen(it, prefix + command.name + '/')
+            recursivelyListen(it, prefix + command.name + ' ')
         }
         command.groups.each { name, it ->
-            recursivelyListen(it, prefix + command.name + '/')
+            recursivelyListen(it, prefix + command.name + ' ')
         }
     }
 
@@ -96,12 +96,12 @@ final class CommandManagerImpl implements EventListener, CommandManager {
     }
 
     private void onSlashCommand(@NotNull SlashCommandInteractionEvent event) {
-        final listener = commandListeners[event.commandPath]
+        final listener = commandListeners[event.fullCommandName]
         if (listener !== null)
             listener.accept(event)
     }
     private void onAutoComplete(@NotNull CommandAutoCompleteInteractionEvent event) {
-        final listener = autoCompleteListeners[event.commandPath]
+        final listener = autoCompleteListeners[event.fullCommandName]
         if (listener !== null)
             listener.accept(event)
     }

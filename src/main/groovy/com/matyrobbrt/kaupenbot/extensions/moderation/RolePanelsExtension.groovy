@@ -16,15 +16,16 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
-import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.ItemComponent
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenuInteraction
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectInteraction
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 
 import java.awt.Color
@@ -129,7 +130,7 @@ final class RolePanelsExtension implements BotExtension {
                             .flatMap { msg ->
                                 return switch (info.mode) {
                                     case PanelMode.SelectMenu -> {
-                                        final SelectMenu.Builder menu = msg.actionRows.empty ? SelectMenu.create(ID) : (msg.actionRows[0].iterator().find() as SelectMenu).createCopy()
+                                        final SelectMenu.Builder menu = msg.actionRows.empty ? StringSelectMenu.create(ID) : (msg.actionRows[0].iterator().find() as StringSelectMenu).createCopy()
                                         menu.addOption(role.name, role.id, it.string('description'), emoji)
                                         menu.setMinValues(0).setMaxValues(menu.options.size())
                                         yield msg.editMessage(new MessageEditBuilder().build())
@@ -177,7 +178,7 @@ final class RolePanelsExtension implements BotExtension {
                                 .flatMap { msg ->
                                     return switch (info.mode) {
                                         case PanelMode.SelectMenu -> {
-                                            final SelectMenu.Builder menu = msg.actionRows.empty ? SelectMenu.create(ID) : (msg.actionRows[0].iterator().find() as SelectMenu).createCopy()
+                                            final StringSelectMenu.Builder menu = msg.actionRows.empty ? StringSelectMenu.create(ID) : (msg.actionRows[0].iterator().find() as StringSelectMenu).createCopy()
                                             menu.options.removeIf { it.value == role.id }
                                             yield msg.editMessage(new MessageEditBuilder().build())
                                                     .setActionRow(menu.build())
@@ -208,8 +209,8 @@ final class RolePanelsExtension implements BotExtension {
 
     @Override
     void subscribeEvents(JDA jda) {
-        jda.subscribe(SelectMenuInteractionEvent) {
-            if (!fromGuild || selectMenu.id != ID) return
+        jda.subscribe(StringSelectInteractionEvent) {
+            if (!fromGuild || it.getSelectMenu().id != ID) return
             final var selfMember = guild.getSelfMember()
             final var selectedRoles = selectedOptions.stream()
                     .map(SelectOption::getValue)
@@ -238,7 +239,7 @@ final class RolePanelsExtension implements BotExtension {
         }
     }
 
-    private void handleRoleSelection(final SelectMenuInteraction interaction, final Collection<Role> selectedRoles, final Guild guild) {
+    private void handleRoleSelection(final StringSelectInteraction interaction, final Collection<Role> selectedRoles, final Guild guild) {
         final var member = interaction.member
         final var toAdd = new ArrayList<Role>(selectedRoles.size())
         final var toRemove = new ArrayList<Role>(selectedRoles.size())

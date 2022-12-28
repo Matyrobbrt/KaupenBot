@@ -1,6 +1,5 @@
 package com.matyrobbrt.kaupenbot.commands
 
-
 import com.jagrosh.jdautilities.command.CommandEvent
 import com.jagrosh.jdautilities.command.SlashCommand
 import com.jagrosh.jdautilities.command.SlashCommandEvent
@@ -16,9 +15,9 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
-import net.dv8tion.jda.api.interactions.components.Modal
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
+import net.dv8tion.jda.api.interactions.modals.Modal
 import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.ExecutorService

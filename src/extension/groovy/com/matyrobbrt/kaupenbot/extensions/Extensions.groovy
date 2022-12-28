@@ -1,6 +1,6 @@
 package com.matyrobbrt.kaupenbot.extensions
 
-import com.jagrosh.jdautilities.command.SlashCommandEvent
+
 import com.matyrobbrt.kaupenbot.common.util.TimeUtils
 import com.sigpwned.emoji4j.core.GraphemeMatcher
 import com.sun.net.httpserver.HttpExchange
@@ -23,8 +23,8 @@ import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.components.ActionRow
-import net.dv8tion.jda.api.interactions.components.Modal
 import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ModalCallbackAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
@@ -111,7 +111,7 @@ class Extensions {
     private static final AtomicInteger MODALS = new AtomicInteger()
     static ModalCallbackAction replyAndWaitModal(IModalCallback self, Modal.Builder modal, Consumer<ModalInteractionEvent> consumer) {
         final id = "ModalNr${MODALS.getAndIncrement()}".toString()
-        EventWaiters.waiter(self.getJDA()).waitForEvent(ModalInteractionEvent, { it.modalId == id }, consumer)
+        EventWaiters.getWaiter(self.getJDA()).waitForEvent(ModalInteractionEvent, { it.modalId == id }, consumer)
         self.replyModal(modal.setId(id).build())
     }
 

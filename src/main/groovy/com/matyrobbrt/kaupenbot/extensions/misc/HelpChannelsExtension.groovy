@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.requests.RestAction
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -87,11 +88,14 @@ When you have received an answer that satisfies you, make sure to thank everyone
                     ThreadListeners.addMods(thread).queue()
                 }.exceptionHandling()
         }
+    }
 
-        KaupenBot.EXECUTOR.scheduleAtFixedRate({
+    @Override
+    void scheduleTasks(ScheduledExecutorService service) {
+        service.scheduleAtFixedRate({
             final Instant _3DaysAgo = Instant.now().minus(3, ChronoUnit.DAYS)
             KaupenBot.config.channels.helpChannels.each { id ->
-                final ForumChannel forum = jda.getForumChannelById(id)
+                final ForumChannel forum = KaupenBot.jda.getForumChannelById(id)
                 if (forum === null) return
 
                 forum.threadChannels.each {

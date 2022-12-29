@@ -74,7 +74,6 @@ final class KaupenBot {
     }
 
     public static final Logger log = LoggerFactory.get()
-    public static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(2) { new Thread(it, 'Scheduled Executor').tap { it.setDaemon(true) }}
 
     static PluginRegistry plugins
     static Jdbi database

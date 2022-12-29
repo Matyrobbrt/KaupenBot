@@ -83,10 +83,19 @@ sealed class CommandBuilder permits PaginatedCommandBuilder {
     ) @ClosureParams(value = SimpleType, options = 'net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent') Closure closure) {
         this.autoComplete = closure
     }
+
     void autoCompleteOption(String optionName, @DelegatesTo(
             value = CommandAutoCompleteInteractionEvent,
             strategy = Closure.DELEGATE_FIRST
     ) @ClosureParams(value = SimpleType, options = 'java.lang.String') Closure closure) {
+        autoCompleteOptions([optionName], closure)
+    }
+
+    void autoCompleteOptions(List<String> optionNames, @DelegatesTo(
+            value = CommandAutoCompleteInteractionEvent,
+            strategy = Closure.DELEGATE_FIRST
+    ) @ClosureParams(value = SimpleType, options = 'java.lang.String') Closure closure) {
+        final optionsSet = new HashSet<>(optionNames)
         final oldAutoComplete = this.autoComplete
         this.autoComplete {
             if (oldAutoComplete !== null) {
@@ -95,7 +104,7 @@ sealed class CommandBuilder permits PaginatedCommandBuilder {
                 oldAutoComplete.delegate = it
                 oldAutoComplete(it)
             }
-            if (focusedOption?.name == optionName) {
+            if (optionsSet.contains(focusedOption?.name)) {
                 closure.resolveStrategy = Closure.DELEGATE_FIRST
                 closure.delegate = it
                 closure(focusedOption.value)

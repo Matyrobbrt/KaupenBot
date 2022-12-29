@@ -79,7 +79,6 @@ final class WebhookManagerImpl extends WebhookManager {
             executor = Executors.newScheduledThreadPool(Math.max(MANAGERS.size() / 3 as int, 1) as int, r -> new Thread(r, "Webhooks").tap { it.daemon = true })
             // Clear webhooks after 6 hours to refresh them
             getExecutor().scheduleAtFixedRate(() -> MANAGERS.forEach(it -> {
-                it.close()
                 it.webhooks.clear()
             }), 1, 6, TimeUnit.HOURS)
         }

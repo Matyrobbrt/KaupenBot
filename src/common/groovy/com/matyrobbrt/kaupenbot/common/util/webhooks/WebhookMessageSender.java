@@ -64,7 +64,8 @@ public class WebhookMessageSender {
         final var builder = new WebhookMessageBuilder()
                 .setAvatarUrl(message.getAuthor().getEffectiveAvatarUrl())
                 .setUsername(message.getAuthor().getName())
-                .setContent(message.getContentRaw());
+                .setContent(message.getContentRaw())
+                .setAllowedMentions(AllowedMentions.none());
         message.getAttachments().forEach(attachment -> builder.addFile(attachment.getFileName(), readBytes(attachment)));
         return client.send(builder.build());
     }

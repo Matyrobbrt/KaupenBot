@@ -12,6 +12,7 @@ repositories {
 
 sourceSets {
     modmail {}
+    bingTranslate {}
     var ext = create('extension')
     main {
         compileClasspath += ext.output
@@ -25,6 +26,9 @@ sourceSets {
     main {
         compileClasspath += api.output
         runtimeClasspath += api.output
+
+        compileClasspath += bingTranslate.output
+        runtimeClasspath += bingTranslate.output
     }
     modmail {
         compileClasspath += api.output
@@ -52,6 +56,7 @@ configurations {
     apiImplementation.extendsFrom(implementation)
     commonImplementation.extendsFrom(implementation)
     modmailImplementation.extendsFrom(implementation)
+    bingTranslateImplementation.extendsFrom(implementation)
     shade
     shade.extendsFrom(implementation)
 }
@@ -94,6 +99,7 @@ dependencies {
     extensionCompileClasspath 'net.sf.trove4j:trove4j:3.0.3'
 
     implementation 'com.google.code.findbugs:annotations:3.0.1'
+    implementation 'com.github.mizosoft.methanol:methanol:1.6.0'
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -101,6 +107,10 @@ tasks.withType(GroovyCompile).configureEach {
     it.groovyOptions.fork = true
     it.groovyOptions.encoding = 'UTF-8'
     it.groovyOptions.optimizationOptions.indy = true
+}
+
+tasks.withType(JavaCompile)configureEach {
+    options.encoding = 'UTF-8'
 }
 
 shadowJar {
@@ -113,5 +123,6 @@ shadowJar {
     from sourceSets.extension.output
     from sourceSets.common.output
     from sourceSets.modmail.output
+    from sourceSets.bingTranslate.output
     classifier = ''
 }

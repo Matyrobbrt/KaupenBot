@@ -99,7 +99,6 @@ dependencies {
     extensionCompileClasspath 'net.sf.trove4j:trove4j:3.0.3'
 
     implementation 'com.google.code.findbugs:annotations:3.0.1'
-    implementation 'com.github.mizosoft.methanol:methanol:1.6.0'
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)

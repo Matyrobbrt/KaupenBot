@@ -125,7 +125,7 @@ public enum Language {
     URDU("ur", "Urdu"),
     UYGHUR("ug", "Uyghur"),
     UZBEK_LATIN("uz", "Uzbek (Latin)"),
-    VIETNAMESE("vi", "Vietnamese"),
+    VIETNAMESE("vi", "Vietnamese", countryCodeToEmoji("VN")),
     WELSH("cy", "Welsh", countryCodeToEmoji("GB")),
     YUCATEC_MAYA("yua", "Yucatec Maya"),
     ZULU("zu", "Zulu");
@@ -167,6 +167,10 @@ public enum Language {
 
     @Nullable
     public Emoji asEmoji() {
+        if (this == WELSH) {
+            return Emoji.fromUnicode("\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F");
+        }
+
         return flag.isBlank() ? null : Emoji.fromUnicode(flag);
     }
 

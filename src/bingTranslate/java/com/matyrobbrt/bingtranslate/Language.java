@@ -22,7 +22,7 @@ public enum Language {
     AFRIKAANS("af", "Afrikaans"),
     ALBANIAN("sq", "Albanian"),
     AMHARIC("am", "Amharic"),
-    ARABIC("ar", "Arabic"),
+    ARABIC("ar", "Arabic", countryCodeToEmoji("EG")),
     ARMENIAN("hy", "Armenian"),
     ASSAMESE("as", "Assamese"),
     AZERBAIJANI("az", "Azerbaijani"),
@@ -126,7 +126,7 @@ public enum Language {
     UYGHUR("ug", "Uyghur"),
     UZBEK_LATIN("uz", "Uzbek (Latin)"),
     VIETNAMESE("vi", "Vietnamese"),
-    WELSH("cy", "Welsh"),
+    WELSH("cy", "Welsh", countryCodeToEmoji("GB")),
     YUCATEC_MAYA("yua", "Yucatec Maya"),
     ZULU("zu", "Zulu");
 

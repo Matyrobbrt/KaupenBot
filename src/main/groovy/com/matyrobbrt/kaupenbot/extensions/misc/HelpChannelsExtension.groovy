@@ -12,12 +12,11 @@ import groovy.transform.CompileStatic
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Icon
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.Webhook
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent
-import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.events.channel.update.ChannelUpdateAppliedTagsEvent
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -51,6 +50,7 @@ Code here
 
 When you have received an answer that satisfies you, make sure to thank everyone who helped you and close the thread as shown below!
 '''.trim()
+    private static final String NOT_MODDING_HELP = 'This channel is not for Minecraft support! Get the roles you need from <#858641026747334666> and ask in the relevant channels!'
 
     private static final List<Attachment> ATTACHMENTS = List.of(new Attachment('close_thrad.png', KaupenBot.class.getResourceAsStream('/images/close_thread.png').withCloseable { it.readAllBytes() }))
 
@@ -65,7 +65,7 @@ When you have received an answer that satisfies you, make sure to thank everyone
                 if (thread.appliedTags.stream().anyMatch {
                     it.name.equalsIgnoreCase('minecraft')
                 }) {
-                    thread.sendMessage('This channel is not for Minecraft support! Get the roles you need from <#858641026747334666> and ask in the relevant channels!')
+                    thread.sendMessage(NOT_MODDING_HELP)
                             .flatMap { thread.manager.setLocked(true).setArchived(true) }
                             .queue()
                     return
@@ -87,6 +87,17 @@ When you have received an answer that satisfies you, make sure to thank everyone
                 .thenAccept {
                     ThreadListeners.addMods(thread).queue()
                 }.exceptionHandling()
+        }
+
+        jda.subscribe(ChannelUpdateAppliedTagsEvent) {
+            final thread = it.channel.asThreadChannel()
+            if (thread.parentChannel.idLong === KaupenBot.config.channels.programmingHelpChannel && it.newTags.stream().anyMatch {
+                it.name.equalsIgnoreCase('minecraft')
+            }) {
+                thread.sendMessage(NOT_MODDING_HELP)
+                        .flatMap { thread.manager.setLocked(true).setArchived(true) }
+                        .queue()
+            }
         }
     }
 

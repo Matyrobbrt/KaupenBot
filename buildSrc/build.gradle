@@ -1,0 +1,20 @@
+plugins {
+    id 'groovy'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://repo.mattmalec.com/repository/releases'
+    }
+}
+
+dependencies {
+    implementation 'org.apache.groovy:groovy:4.0.4'
+
+    implementation('com.mattmalec:Pterodactyl4J:2.BETA_139') {
+        transitive = false
+    }
+    implementation 'org.json:json:20160810'
+    implementation 'com.squareup.okhttp3:okhttp:3.13.0'
+}

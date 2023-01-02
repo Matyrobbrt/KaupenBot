@@ -1,3 +1,5 @@
+import com.matyrobbrt.kaupenbot.gradle.UploadFileToPterodactyl
+
 plugins {
     id 'java'
     id 'groovy'
@@ -101,6 +103,12 @@ dependencies {
     implementation 'com.google.code.findbugs:annotations:3.0.1'
 }
 
+tasks.all {
+    if (it.group == 'build') {
+        it.group = 'other'
+    }
+}
+
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 tasks.withType(GroovyCompile).configureEach {
     it.groovyOptions.fork = true
@@ -113,6 +121,8 @@ tasks.withType(JavaCompile)configureEach {
 }
 
 shadowJar {
+    group = 'build'
+
     configurations = [project.configurations.shade]
     manifest.attributes([
             'Main-Class': application.mainClassName,
@@ -124,4 +134,21 @@ shadowJar {
     from sourceSets.modmail.output
     from sourceSets.bingTranslate.output
     classifier = ''
+}
+
+final secrets = new Properties()
+final secretsFile = file('secrets.properties')
+if (secretsFile.exists()) {
+    secretsFile.newReader().withCloseable { secrets.load(it) }
+}
+tasks.register('uploadBot', UploadFileToPterodactyl).configure {
+    group = 'build'
+    dependsOn('shadowJar')
+
+    serverURL.set(secrets.getProperty('serverURL'))
+    serverID.set(secrets.getProperty('serverID'))
+    apiToken.set(secrets.getProperty('apiToken'))
+
+    filePath.set('KaupenBot.jar')
+    fileToUpload.set(tasks.named('shadowJar', Jar).flatMap { it.archiveFile })
 }

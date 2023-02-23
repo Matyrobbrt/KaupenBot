@@ -1,5 +1,10 @@
 package com.matyrobbrt.kaupenbot.common.util;
 
+import club.minnced.discord.webhook.WebhookClient;
+import club.minnced.discord.webhook.send.AllowedMentions;
+import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
+import club.minnced.discord.webhook.send.WebhookMessage;
+import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import com.matyrobbrt.jdahelper.components.context.ButtonInteractionContext;
 import com.matyrobbrt.jdahelper.pagination.PaginatorImpl;
 import com.matyrobbrt.kaupenbot.common.command.PaginatedCommandBuilder;
@@ -12,11 +17,13 @@ import net.dv8tion.jda.api.interactions.components.Component;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -84,5 +91,23 @@ public class JavaCalls {
             current.add(obj);
         }
         return splitInLists.stream().map(it -> ActionRow.of(it.stream().map(buttonFunction).toList())).toList();
+    }
+
+    public static CompletableFuture<?> sendMessages(WebhookClient client, String name, String avatar, List<MessageCreateData> messages) {
+        final Function<MessageCreateData, WebhookMessage> function = jda -> {
+            final var builder = new WebhookMessageBuilder()
+                    .setContent(jda.getContent())
+                    .setAvatarUrl(avatar)
+                    .setUsername(name)
+                    .setAllowedMentions(AllowedMentions.none());
+            jda.getEmbeds().forEach(embed -> builder.addEmbeds(WebhookEmbedBuilder.fromJDA(embed).build()));
+            return builder.build();
+        };
+        CompletableFuture<?> action = client.send(function.apply(messages.get(0)));
+        for (int i = 1; i < messages.size(); i++) {
+            final var msg = messages.get(i);
+            action = action.thenCompose(sent -> client.send(function.apply(msg)));
+        }
+        return action;
     }
 }

@@ -3,7 +3,6 @@ package com.matyrobbrt.kaupenbot.extensions.misc
 import com.matyrobbrt.jdahelper.components.ComponentListener
 import com.matyrobbrt.jdahelper.components.ComponentManager
 import com.matyrobbrt.jdahelper.components.context.ButtonInteractionContext
-import com.matyrobbrt.kaupenbot.KaupenBot
 import com.matyrobbrt.kaupenbot.common.extension.BotExtension
 import com.matyrobbrt.kaupenbot.common.extension.ExtensionArgument
 import com.matyrobbrt.kaupenbot.common.extension.RegisterExtension
@@ -20,7 +19,6 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.emoji.Emoji
-import net.dv8tion.jda.api.entities.emoji.EmojiUnion
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
@@ -29,7 +27,6 @@ import net.dv8tion.jda.api.utils.data.DataObject
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import net.dv8tion.jda.internal.JDAImpl
-import net.dv8tion.jda.internal.entities.EntityBuilder
 
 import java.awt.*
 import java.time.Instant
@@ -44,17 +41,6 @@ final class LogParserExtension implements BotExtension {
             'log', 'txt'
     )
     private static final UnicodeEmoji EMOJI = Emoji.fromUnicode('❓')
-    private static final Map<Integer, EmojiUnion> NR_TO_EMOJI = [
-            1: Emoji.fromFormatted('1️'),
-            2: Emoji.fromFormatted('2️'),
-            3: Emoji.fromFormatted('3️'),
-            4: Emoji.fromFormatted('4️'),
-            5: Emoji.fromFormatted('5️'),
-            6: Emoji.fromFormatted('6️'),
-            7: Emoji.fromFormatted('7️'),
-            8: Emoji.fromFormatted('8️'),
-            9: Emoji.fromFormatted('9️'),
-    ]
 
     private final ComponentListener components
     private final String gistToken
@@ -66,6 +52,7 @@ final class LogParserExtension implements BotExtension {
                 .build()
     }
 
+    @SuppressWarnings('GrMethodMayBeStatic')
     private void onButton(final ButtonInteractionContext ctx) {
         final issueEmbedStr = ctx.arguments.get(0)
         final builder = new EmbedBuilder(((JDAImpl) ctx.getJDA()).entityBuilder.createMessageEmbed(DataObject.fromJson(issueEmbedStr)))

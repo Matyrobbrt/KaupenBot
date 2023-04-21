@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+// https://github.com/plainheart/bing-translate-api/blob/master/src/index.js
 public class Translator {
     public static final String API_ROOT = "https://%sbing.com";
     public static final String TRANSLATE_WEBSITE = API_ROOT + "/translator";
@@ -74,7 +75,7 @@ public class Translator {
 
     public static String makeRequestURL(GlobalConfig config) {
         return replaceSubdomain(TRANSLATE_API, config.subdomain)
-                + "?isVertical=" + (config.isVertical ? 1 : 0)
+                + "?isVertical=1"
                 + (config.IG.isBlank() ? "" : "&IG=" + config.IG)
                 + (config.IID.isBlank() ? "" : "&IID=" + config.IID + "." + config.cnt.getAndIncrement());
     }
@@ -104,7 +105,7 @@ public class Translator {
                 ).collect(Collectors.joining("&")));
     }
 
-    public record GlobalConfig(String subdomain, String cookie, String IG, String IID, long generatedAt, String token, long expiryInterval, Instant expiry, boolean isVertical, AtomicInteger cnt) {
+    public record GlobalConfig(String subdomain, String cookie, String IG, String IID, long generatedAt, String token, long expiryInterval, Instant expiry, AtomicInteger cnt) {
 
         public static GlobalConfig fetch() throws IOException, InterruptedException {
             final HttpRequest request = HttpRequest.newBuilder()
@@ -121,10 +122,10 @@ public class Translator {
             final String IG = findBetweenQuotes(bodyStr, "IG:");
             final String IID = findBetweenQuotes(bodyStr, "data-iid=");
 
-            final JsonArray body = GSON.fromJson(match(bodyStr, "params_RichTranslateHelper\\s?=\\s?([^\\]]+\\])", 1), JsonArray.class);
+            final JsonArray body = GSON.fromJson(match(bodyStr, "params_AbusePreventionHelper\\s?=\\s?([^\\]]+\\])", 1), JsonArray.class);
             final long generatedAt = body.get(0).getAsLong();
             final long expiryInterval = body.get(2).getAsLong();
-            return new GlobalConfig(subdomain, cookie, IG, IID, generatedAt, body.get(1).getAsString(), expiryInterval, Instant.ofEpochMilli(generatedAt).plusMillis(expiryInterval), body.get(3).getAsBoolean(), new AtomicInteger());
+            return new GlobalConfig(subdomain, cookie, IG, IID, generatedAt, body.get(1).getAsString(), expiryInterval, Instant.ofEpochMilli(generatedAt).plusMillis(expiryInterval), new AtomicInteger());
         }
 
         public boolean isExpired() {

@@ -138,7 +138,8 @@ final class KaupenBot {
         findExtensions(extensions, [
                 'env' : env,
                 'database': database,
-                'jda': jda
+                'jda': jda,
+                'components': components
         ])
         extensions.forEachEnabled {
             it.registerCommands(commands, client)

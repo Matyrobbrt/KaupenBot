@@ -92,7 +92,7 @@ When you have received an answer that satisfies you, make sure to thank everyone
         jda.subscribe(ChannelUpdateAppliedTagsEvent) {
             final thread = it.channel.asThreadChannel()
             if (thread.parentChannel.idLong === KaupenBot.config.channels.programmingHelpChannel && it.newTags.stream().anyMatch {
-                it.name.equalsIgnoreCase('minecraft')
+                it.name.toLowerCase(Locale.ROOT).contains('minecraft')
             }) {
                 thread.sendMessage(NOT_MODDING_HELP)
                         .flatMap { thread.manager.setLocked(true).setArchived(true) }

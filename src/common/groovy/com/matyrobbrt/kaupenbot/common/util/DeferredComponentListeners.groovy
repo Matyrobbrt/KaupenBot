@@ -11,7 +11,7 @@ final class DeferredComponentListeners {
     private final List<ComponentListener> deferredListeners = Collections.synchronizedList(new ArrayList<>())
 
     ComponentManager createManager(final ComponentStorage storage) {
-        this.manager = new ComponentManager(storage, deferredListeners);
+        this.manager = new ComponentManager(storage, deferredListeners)
         return manager
     }
 

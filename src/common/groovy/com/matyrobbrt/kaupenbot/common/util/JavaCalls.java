@@ -11,22 +11,26 @@ import com.matyrobbrt.kaupenbot.common.command.PaginatedCommandBuilder;
 import com.matyrobbrt.kaupenbot.common.command.PaginatedSlashCommand;
 import com.matyrobbrt.kaupenbot.extensions.Extensions;
 import groovy.lang.Closure;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Component;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class JavaCalls {
     public static int div(int i1, int i2) {
@@ -91,6 +95,21 @@ public class JavaCalls {
             current.add(obj);
         }
         return splitInLists.stream().map(it -> ActionRow.of(it.stream().map(buttonFunction).toList())).toList();
+    }
+
+    public static RestAction<?> disableButtonWithID(Message message, String id) {
+        return message.editMessageComponents(message.getComponents().stream()
+                .map(it -> {
+                    if (it instanceof ActionRow row) {
+                       return ActionRow.of(row.getComponents().stream().map(cp -> {
+                           if (cp instanceof Button button && Objects.equals(button.getId(), id)) {
+                               return button.asDisabled();
+                           }
+                           return cp;
+                       }).toList());
+                    }
+                    return it;
+                }).collect(Collectors.toList()));
     }
 
     public static CompletableFuture<?> sendMessages(WebhookClient client, String name, String avatar, List<MessageCreateData> messages) {

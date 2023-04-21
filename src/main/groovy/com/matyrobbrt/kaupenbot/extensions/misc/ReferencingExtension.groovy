@@ -23,7 +23,7 @@ final class ReferencingExtension implements BotExtension {
     @Override
     void subscribeEvents(JDA jda) {
         jda.subscribe(MessageReceivedEvent) { event ->
-            if (!fromGuild) return
+            if (!fromGuild || author.system) return
             final var originalMsg = getMessage()
             if (originalMsg.getMessageReference() != null && isStringReference(originalMsg.getContentRaw())) {
                 final var referencedMessage = originalMsg.getMessageReference().getMessage()
@@ -49,17 +49,17 @@ final class ReferencingExtension implements BotExtension {
         }
     }
 
-    public static final String ZERO_WIDTH_SPACE = String.valueOf('\u200E');
+    public static final String ZERO_WIDTH_SPACE = String.valueOf('\u200E')
 
     private static boolean isStringReference(@Nonnull final String string) {
         return string == '.' || string == '^' || string == ZERO_WIDTH_SPACE
     }
 
-    static MessageEmbed reference(@Nonnull final Message message, @Nullable final Member quoter) {
+    static MessageEmbed reference(@Nonnull final Message message, @Nonnull final Member quoter) {
         reference(message, new Quoter(quoter.idLong, quoter.user.asTag, quoter.effectiveAvatarUrl))
     }
 
-    static MessageEmbed reference(@Nonnull final Message message, @Nullable final Quoter quoter) {
+    static MessageEmbed reference(@Nonnull final Message message, @Nonnull final Quoter quoter) {
         final var hasAuthor = !message.webhookMessage
         final var msgLink = message.jumpUrl
         final var embed = new EmbedBuilder().setTimestamp(message.getTimeCreated())

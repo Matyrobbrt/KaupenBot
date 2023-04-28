@@ -111,6 +111,8 @@ When you have received an answer that satisfies you, make sure to thank everyone
                 if (forum === null) return
 
                 forum.threadChannels.each {
+                    if (it.pinned) return
+
                     final Consumer<Message> lastMessage = { Message last ->
                         if (last.timeCreated.toInstant().isBefore(_3DaysAgo)) {
                             it.manager.setArchived(true).reason('3 days without activity').queue()

@@ -34,7 +34,7 @@ That includes passing references of objects to others via constructors. Use a `S
 
 Another possible cause is, if it's a custom object registered via `DeferredRegister#register`, make sure your DeferredRegister is registered to your mod bus, during mod construction, like so:
 ```java
-ITEMS.register(modEventBus);
+ITEMS.register(modEventBus); // Assuming ITEMS is the name of your DeferredRegister
 ```
 """.trim(), false
                 }

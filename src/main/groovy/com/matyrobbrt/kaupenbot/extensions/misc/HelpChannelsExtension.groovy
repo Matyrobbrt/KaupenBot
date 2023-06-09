@@ -53,7 +53,7 @@ When you have received an answer that satisfies you, make sure to thank everyone
 """.toString().trim()
     private static final String NOT_MODDING_HELP = 'This channel is not for Minecraft support! Get the roles you need from <#858641026747334666> and ask in the relevant channels!'
 
-    private static final List<Attachment> ATTACHMENTS = List.of(new Attachment('close_thrad.png', KaupenBot.class.getResourceAsStream('/images/close_thread.png').withCloseable { it.readAllBytes() }))
+    private static final List<Attachment> ATTACHMENTS = List.of(new Attachment('close_thread.png', KaupenBot.class.getResourceAsStream('/images/close_thread.png').withCloseable { it.readAllBytes() }))
 
     @Override
     void subscribeEvents(JDA jda) {
@@ -74,9 +74,9 @@ When you have received an answer that satisfies you, make sure to thank everyone
             }
 
             if (thread.appliedTags.stream().noneMatch {
-                it.name.startsWith('Version:') || it.name.startsWith('1.1')
+                it.name.startsWith('Version:') || it.name.startsWith('1.')
             } && thread.parentChannel.asForumChannel().availableTags.stream().anyMatch {
-                it.name.startsWith('Version:') || it.name.startsWith('1.1')
+                it.name.startsWith('Version:') || it.name.startsWith('1.')
             }) {
                 thread.sendMessage(NO_VERSION)
                     .flatMap { thread.manager.setLocked(true).setArchived(true) }
